@@ -27,8 +27,6 @@ func main() {
 		return nil
 	}
 
-	log.Println(*mode)
-
 	i, err := index.NewIndexer(*mode, f)
 
 	if err != nil {
