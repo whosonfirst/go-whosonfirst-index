@@ -80,7 +80,7 @@ func (i *Indexer) IndexPath(path string, args ...interface{}) error {
 			return err
 		}
 
-		return i.IndexDirectory(abs_path, args...)
+		return i.IndexDirectory(data, args...)
 
 	} else if i.Mode == "filelist" {
 
