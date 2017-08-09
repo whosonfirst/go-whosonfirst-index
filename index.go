@@ -29,6 +29,20 @@ func NewIndexer(mode string, f IndexerFunc) (*Indexer, error) {
 	return &i, nil
 }
 
+func (i *Indexer) IndexPaths(paths []string, args ...interface{}) error {
+
+	for _, path := range paths {
+
+		err := i.IndexPath(path, args...)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (i *Indexer) IndexPath(path string, args ...interface{}) error {
 
 	var abs_path string
