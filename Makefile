@@ -17,6 +17,7 @@ rmdeps:
 
 deps:
 	@GOPATH=$(GOPATH) go get -u "github.com/whosonfirst/go-whosonfirst-crawl"
+	@GOPATH=$(GOPATH) go get -u "github.com/whosonfirst/go-whosonfirst-csv"
 
 vendor-deps: rmdeps deps
 	if test ! -d vendor; then mkdir vendor; fi

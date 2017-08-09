@@ -1,8 +1,12 @@
 package index
 
 import (
+	"bufio"
 	"errors"
-	"github.com/whosonfirst/go-whosonfirst-crawl"		
+	"github.com/whosonfirst/go-whosonfirst-crawl"
+	"github.com/whosonfirst/go-whosonfirst-csv"
+	"io"
+	_ "log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -27,31 +31,73 @@ func NewIndexer(mode string, f IndexerFunc) (*Indexer, error) {
 
 func (i *Indexer) IndexPath(path string, args ...interface{}) error {
 
-	abs_path, err := filepath.Abs(path)
+	var abs_path string
+	var info os.FileInfo
 
-	if err != nil {
-		return err
-	}
+	if i.Mode != "meta" {
 
-	if i.Mode == "directory" {
-
-		return i.IndexDirectory(abs_path, args)
-
-	} else if i.Mode == "repo" {
-
-		data := filepath.Join(abs_path, "data")
-
-		_, err = os.Stat(data)
+		_path, err := filepath.Abs(path)
 
 		if err != nil {
 			return err
 		}
 
-		return i.IndexDirectory(abs_path, args)
+		_info, err := os.Stat(abs_path)
+
+		if err != nil {
+			return err
+		}
+
+		abs_path = _path
+		info = _info
+	}
+
+	if i.Mode == "directory" {
+
+		return i.IndexDirectory(abs_path, args...)
+
+	} else if i.Mode == "repo" {
+
+		data := filepath.Join(abs_path, "data")
+
+		_, err := os.Stat(data)
+
+		if err != nil {
+			return err
+		}
+
+		return i.IndexDirectory(abs_path, args...)
 
 	} else if i.Mode == "filelist" {
 
-		return errors.New("Please write me")
+		fh, err := os.Open(abs_path)
+
+		if err != nil {
+			return nil
+		}
+
+		defer fh.Close()
+
+		scanner := bufio.NewScanner(fh)
+
+		for scanner.Scan() {
+
+			file_path := scanner.Text()
+
+			file_info, err := os.Stat(file_path)
+
+			if err != nil {
+				return err
+			}
+
+			err = i.Func(file_path, file_info, args...)
+
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
 
 	} else if i.Mode == "meta" {
 
@@ -70,24 +116,57 @@ func (i *Indexer) IndexPath(path string, args ...interface{}) error {
 			}
 		}
 
-		// meta_file := parts[0]
+		meta_file := parts[0]
+		data_root := parts[1]
 
-		// TO DO: append data_root to args...
-		// data_root := parts[1]
-
-		return errors.New("Please write me")
-
-	} else {
-
-		info, err := os.Stat(abs_path)
+		reader, err := csv.NewDictReaderFromPath(meta_file)
 
 		if err != nil {
-		   return nil
+			return err
 		}
+
+		for {
+			row, err := reader.Read()
+
+			if err == io.EOF {
+				break
+			}
+
+			if err != nil {
+				return err
+			}
+
+			rel_path, ok := row["path"]
+
+			if !ok {
+				return errors.New("Missing path key")
+			}
+
+			// TO DO: make this work with a row["repo"] key
+			// (20170809/thisisaaronland)
+
+			file_path := filepath.Join(data_root, rel_path)
+			file_info, err := os.Stat(file_path)
+
+			if err != nil {
+				return err
+			}
+
+			err = i.Func(file_path, file_info, args...)
+
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
 		
+	} else {
+
 		return i.Func(abs_path, info, args...)
 	}
 
+	
 }
 
 func (i *Indexer) IndexDirectory(path string, args ...interface{}) error {

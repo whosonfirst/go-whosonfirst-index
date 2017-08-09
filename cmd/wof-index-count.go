@@ -17,13 +17,17 @@ func main() {
 
 	f := func(path string, info os.FileInfo, args ...interface{}) error {
 
-	  	if info.IsDir(){
-		   return nil
+		// log.Println(path)
+
+		if info.IsDir() {
+			return nil
 		}
-		
+
 		count += 1
 		return nil
 	}
+
+	log.Println(*mode)
 
 	i, err := index.NewIndexer(*mode, f)
 
