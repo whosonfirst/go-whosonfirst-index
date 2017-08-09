@@ -2,12 +2,13 @@ package index
 
 import (
 	"errors"
+	"github.com/whosonfirst/go-whosonfirst-crawl"		
 	"os"
 	"path/filepath"
 	"strings"
 )
 
-type IndexerFunc func(path string, args ...interface{}) error
+type IndexerFunc func(path string, info os.FileInfo, args ...interface{}) error
 
 type Indexer struct {
 	Mode string
@@ -34,7 +35,7 @@ func (i *Indexer) IndexPath(path string, args ...interface{}) error {
 
 	if i.Mode == "directory" {
 
-		return i.Func(abs_path, args)
+		return i.IndexDirectory(abs_path, args)
 
 	} else if i.Mode == "repo" {
 
@@ -46,11 +47,11 @@ func (i *Indexer) IndexPath(path string, args ...interface{}) error {
 			return err
 		}
 
-		return i.Func(abs_path, args)
+		return i.IndexDirectory(abs_path, args)
 
 	} else if i.Mode == "filelist" {
 
-		return i.Func(abs_path, args)
+		return errors.New("Please write me")
 
 	} else if i.Mode == "meta" {
 
@@ -69,16 +70,32 @@ func (i *Indexer) IndexPath(path string, args ...interface{}) error {
 			}
 		}
 
-		meta_file := parts[0]
+		// meta_file := parts[0]
 
 		// TO DO: append data_root to args...
 		// data_root := parts[1]
 
-		return i.Func(meta_file, args)
+		return errors.New("Please write me")
 
 	} else {
 
-		return i.Func(abs_path, args)
+		info, err := os.Stat(abs_path)
+
+		if err != nil {
+		   return nil
+		}
+		
+		return i.Func(abs_path, info, args...)
 	}
 
+}
+
+func (i *Indexer) IndexDirectory(path string, args ...interface{}) error {
+
+	cb := func(path string, info os.FileInfo) error {
+		return i.Func(path, info, args...)
+	}
+
+	c := crawl.NewCrawler(path)
+	return c.Crawl(cb)
 }

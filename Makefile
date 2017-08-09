@@ -16,6 +16,7 @@ rmdeps:
 	if test -d src; then rm -rf src; fi 
 
 deps:
+	@GOPATH=$(GOPATH) go get -u "github.com/whosonfirst/go-whosonfirst-crawl"
 
 vendor-deps: rmdeps deps
 	if test ! -d vendor; then mkdir vendor; fi

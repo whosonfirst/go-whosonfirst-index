@@ -4,6 +4,7 @@ import (
 	"flag"
 	"github.com/whosonfirst/go-whosonfirst-index"
 	"log"
+	"os"
 )
 
 func main() {
@@ -14,7 +15,12 @@ func main() {
 
 	count := 0
 
-	f := func(path string, args ...interface{}) error {
+	f := func(path string, info os.FileInfo, args ...interface{}) error {
+
+	  	if info.IsDir(){
+		   return nil
+		}
+		
 		count += 1
 		return nil
 	}
