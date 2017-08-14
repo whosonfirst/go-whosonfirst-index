@@ -3,67 +3,59 @@ package index
 import (
 	"bufio"
 	"errors"
-	"fmt"
 	"github.com/whosonfirst/go-whosonfirst-crawl"
 	"github.com/whosonfirst/go-whosonfirst-csv"
+	"github.com/whosonfirst/go-whosonfirst-timer"
 	"io"
-	_ "log"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 )
 
 type IndexerFunc func(path string, info os.FileInfo, args ...interface{}) error
 
 type Indexer struct {
-	Mode    string
-	Func    IndexerFunc
-	Timings chan IndexerTiming
-}
-
-type IndexerTiming struct {
-	Mode     string
-	Path     string
-	Duration time.Duration
-}
-
-func NewIndexerTiming(mode string, path string, duration time.Duration) IndexerTiming {
-
-	i := IndexerTiming{
-		Mode:     mode,
-		Path:     path,
-		Duration: duration,
-	}
-
-	return i
-}
-
-func (i IndexerTiming) String() string {
-	return fmt.Sprintf("[%s][%s] %v", i.Mode, i.Path, i.Duration)
+	Mode string
+	Func IndexerFunc
 }
 
 func NewIndexer(mode string, f IndexerFunc) (*Indexer, error) {
 
-	t := make(chan IndexerTiming)
-
 	i := Indexer{
-		Mode:    mode,
-		Func:    f,
-		Timings: t,
+		Mode: mode,
+		Func: f,
 	}
 
 	return &i, nil
 }
 
+func (i *Indexer) NewTimer(mode string, path string) (*timer.Timer, error) {
+
+	cb := func(t timer.Timing) {
+		log.Printf("%s %s %v", mode, path, t.Duration())
+	}
+
+	tm, err := timer.NewDefaultTimer()
+
+	if err != nil {
+		return nil, err
+	}
+
+	tm.Callback = cb
+	return tm, nil
+}
+
 func (i *Indexer) IndexPaths(paths []string, args ...interface{}) error {
 
-	t1 := time.Now()
+	tm, err := i.NewTimer("paths", "...")
 
-	defer func() {
-		t2 := time.Since(t1)
-		i.Timings <- NewIndexerTiming("paths", "...", t2)
-	}()
+	if err != nil {
+		return err
+	}
+
+	defer tm.Close()
+	go tm.Poll()
 
 	for _, path := range paths {
 
@@ -156,12 +148,14 @@ func (i *Indexer) IndexPath(path string, args ...interface{}) error {
 
 func (i *Indexer) IndexDirectory(path string, args ...interface{}) error {
 
-	t1 := time.Now()
+	tm, err := i.NewTimer("directory", path)
 
-	defer func() {
-		t2 := time.Since(t1)
-		i.Timings <- NewIndexerTiming("directory", path, t2)
-	}()
+	if err != nil {
+		return err
+	}
+
+	defer tm.Close()
+	go tm.Poll()
 
 	cb := func(path string, info os.FileInfo) error {
 		return i.Func(path, info, args...)
@@ -173,12 +167,14 @@ func (i *Indexer) IndexDirectory(path string, args ...interface{}) error {
 
 func (i *Indexer) IndexMetaFile(path string, data_root string, args ...interface{}) error {
 
-	t1 := time.Now()
+	tm, err := i.NewTimer("metafile", path)
 
-	defer func() {
-		t2 := time.Since(t1)
-		i.Timings <- NewIndexerTiming("meta", path, t2)
-	}()
+	if err != nil {
+		return err
+	}
+
+	defer tm.Close()
+	go tm.Poll()
 
 	reader, err := csv.NewDictReaderFromPath(path)
 
@@ -225,12 +221,14 @@ func (i *Indexer) IndexMetaFile(path string, data_root string, args ...interface
 
 func (i *Indexer) IndexFileList(path string, args ...interface{}) error {
 
-	t1 := time.Now()
+	tm, err := i.NewTimer("filelist", path)
 
-	defer func() {
-		t2 := time.Since(t1)
-		i.Timings <- NewIndexerTiming("filelist", path, t2)
-	}()
+	if err != nil {
+		return err
+	}
+
+	defer tm.Close()
+	go tm.Poll()
 
 	fh, err := os.Open(path)
 

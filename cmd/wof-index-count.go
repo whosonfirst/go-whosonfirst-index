@@ -33,18 +33,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	go func() {
-
-		for {
-			select {
-			case t := <-i.Timings:
-				log.Println(t)
-			default:
-				// pass
-			}
-		}
-	}()
-
 	for _, path := range flag.Args() {
 
 		err := i.IndexPath(path)
