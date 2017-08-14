@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/whosonfirst/go-whosonfirst-crawl"
 	"github.com/whosonfirst/go-whosonfirst-csv"
+	_ "github.com/whosonfirst/go-whosonfirst-log"
 	"github.com/whosonfirst/go-whosonfirst-timer"
 	"io"
 	"log"
@@ -31,6 +32,9 @@ func NewIndexer(mode string, f IndexerFunc) (*Indexer, error) {
 }
 
 func (i *Indexer) NewTimer(mode string, path string) (*timer.Timer, error) {
+
+	// please for to be writing to a logger thingy
+	// https://github.com/whosonfirst/go-whosonfirst-index/issues/2
 
 	cb := func(t timer.Timing) {
 		log.Printf("%s %s %v", mode, path, t.Duration())
