@@ -20,15 +20,11 @@ func main() {
 	logger := log.NewWOFLogger()
 	logger.AddLogger(writer, "debug")
 
-	/*
-
 	_, err := logger.AddLogger(writer, "debug")
 
 	if err != nil {
 	   panic(err)
 	}
-
-	*/
 
 	logger.Info("Writing all your logs to %s", "wub wub wub")
 	logger.Debug("Hello world")

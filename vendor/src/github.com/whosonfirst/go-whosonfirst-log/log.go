@@ -1,7 +1,6 @@
 package log
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	golog "log"
@@ -31,6 +30,7 @@ func (m *MockLogger) Debug(format string, v ...interface{})   {}
 type WOFLogger struct {
 	Loggers map[string]*golog.Logger
 	levels  map[string]int
+	writers map[string][]io.Writer
 	Prefix  string
 }
 
@@ -65,6 +65,8 @@ func NewWOFLogger(args ...string) *WOFLogger {
 
 	prefix := Prefix(args...)
 
+	writers := make(map[string][]io.Writer)
+
 	loggers := make(map[string]*golog.Logger)
 	levels := make(map[string]int)
 
@@ -79,6 +81,7 @@ func NewWOFLogger(args ...string) *WOFLogger {
 		Loggers: loggers,
 		Prefix:  prefix,
 		levels:  levels,
+		writers: writers,
 	}
 
 	return &l
@@ -86,16 +89,20 @@ func NewWOFLogger(args ...string) *WOFLogger {
 
 func (l WOFLogger) AddLogger(out io.Writer, minlevel string) (bool, error) {
 
-	_, ok := l.Loggers[minlevel]
+	_, ok := l.writers[minlevel]
 
-	// PLEASE FIX THIS...
-	// https://github.com/whosonfirst/go-whosonfirst-log/issues/2
-	
-	if ok {
-		return false, errors.New("log level already defined")
+	if !ok {
+		wr := make([]io.Writer, 0)
+		l.writers[minlevel] = wr
 	}
 
-	logger := golog.New(out, "", golog.Lmicroseconds)
+	// check to see whether we already have this logger?
+
+	l.writers[minlevel] = append(l.writers[minlevel], out)
+
+	m := io.MultiWriter(l.writers[minlevel]...)
+
+	logger := golog.New(m, "", golog.Lmicroseconds)
 	l.Loggers[minlevel] = logger
 
 	return true, nil

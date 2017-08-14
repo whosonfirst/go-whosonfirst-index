@@ -5,10 +5,9 @@ import (
 	"errors"
 	"github.com/whosonfirst/go-whosonfirst-crawl"
 	"github.com/whosonfirst/go-whosonfirst-csv"
-	_ "github.com/whosonfirst/go-whosonfirst-log"
+	"github.com/whosonfirst/go-whosonfirst-log"
 	"github.com/whosonfirst/go-whosonfirst-timer"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -19,13 +18,17 @@ type IndexerFunc func(path string, info os.FileInfo, args ...interface{}) error
 type Indexer struct {
 	Mode string
 	Func IndexerFunc
+	Logger *log.WOFLogger
 }
 
 func NewIndexer(mode string, f IndexerFunc) (*Indexer, error) {
 
+        logger := log.SimpleWOFLogger("index")
+
 	i := Indexer{
 		Mode: mode,
 		Func: f,
+		Logger: logger,
 	}
 
 	return &i, nil
@@ -33,11 +36,8 @@ func NewIndexer(mode string, f IndexerFunc) (*Indexer, error) {
 
 func (i *Indexer) NewTimer(mode string, path string) (*timer.Timer, error) {
 
-	// please for to be writing to a logger thingy
-	// https://github.com/whosonfirst/go-whosonfirst-index/issues/2
-
 	cb := func(t timer.Timing) {
-		log.Printf("%s %s %v", mode, path, t.Duration())
+		i.Logger.Status("%s %s %v", mode, path, t.Duration())
 	}
 
 	tm, err := timer.NewDefaultTimer()
@@ -222,6 +222,8 @@ func (i *Indexer) IndexMetaFile(path string, data_root string, args ...interface
 			return err
 		}
 
+		i.Logger.Status("process %s", file_path)
+
 		err = i.Func(file_path, file_info, args...)
 
 		if err != nil {
@@ -262,6 +264,8 @@ func (i *Indexer) IndexFileList(path string, args ...interface{}) error {
 		if err != nil {
 			return err
 		}
+
+		i.Logger.Status("process %s", file_path)
 
 		err = i.Func(file_path, file_info, args...)
 
