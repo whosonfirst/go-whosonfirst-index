@@ -120,6 +120,15 @@ func (i *Indexer) IndexPath(path string, args ...interface{}) error {
 
 		parts := strings.Split(path, ":")
 
+		if len(parts) == 1 {
+
+			meta_root := filepath.Dir(parts[0])
+			repo_root := filepath.Dir(meta_root)
+			data_root := filepath.Join(repo_root, "data")
+
+			parts = append(parts, data_root)
+		}
+
 		if len(parts) != 2 {
 			return errors.New("Invalid path declaration for a meta file")
 		}
