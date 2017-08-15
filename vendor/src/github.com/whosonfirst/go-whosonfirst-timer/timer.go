@@ -90,7 +90,7 @@ func (tm *Timer) poll() {
 		case t := <-tm.Timings:
 			tm.Callback(t)
 		case <-tm.Done:
-			break
+			return
 		default:
 			// pass
 		}
