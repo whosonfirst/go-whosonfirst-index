@@ -222,7 +222,7 @@ func (i *Indexer) IndexMetaFile(path string, data_root string, args ...interface
 			return err
 		}
 
-		i.Logger.Status("process %s", file_path)
+		i.Logger.Debug("process %s", file_path)
 
 		err = i.Func(file_path, file_info, args...)
 
@@ -265,7 +265,7 @@ func (i *Indexer) IndexFileList(path string, args ...interface{}) error {
 			return err
 		}
 
-		i.Logger.Status("process %s", file_path)
+		i.Logger.Debug("process %s", file_path)
 
 		err = i.Func(file_path, file_info, args...)
 
