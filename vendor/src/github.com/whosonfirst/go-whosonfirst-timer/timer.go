@@ -71,10 +71,18 @@ func NewTimer(ch chan Timing, con TimingConstructor, cb TimingCallback) (*Timer,
 		Done:        done,
 	}
 
+	go t.poll()
+
 	return &t, nil
 }
 
-func (tm *Timer) Poll() {
+func (tm *Timer) Stop() {
+	t2 := time.Since(tm.Start)
+	tm.Timings <- tm.Constructor(t2)
+	tm.Done <- true
+}
+
+func (tm *Timer) poll() {
 
 	for {
 
@@ -88,10 +96,4 @@ func (tm *Timer) Poll() {
 		}
 	}
 
-}
-
-func (tm *Timer) Close() {
-	t2 := time.Since(tm.Start)
-	tm.Timings <- tm.Constructor(t2)
-	tm.Done <- true
 }

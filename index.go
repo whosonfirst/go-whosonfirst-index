@@ -58,8 +58,7 @@ func (i *Indexer) IndexPaths(paths []string, args ...interface{}) error {
 		return err
 	}
 
-	defer tm.Close()
-	go tm.Poll()
+	defer tm.Stop()
 
 	for _, path := range paths {
 
@@ -167,8 +166,7 @@ func (i *Indexer) IndexDirectory(path string, args ...interface{}) error {
 		return err
 	}
 
-	defer tm.Close()
-	go tm.Poll()
+	defer tm.Stop()
 
 	cb := func(path string, info os.FileInfo) error {
 		return i.Func(path, info, args...)
@@ -186,8 +184,7 @@ func (i *Indexer) IndexMetaFile(path string, data_root string, args ...interface
 		return err
 	}
 
-	defer tm.Close()
-	go tm.Poll()
+	defer tm.Stop()
 
 	reader, err := csv.NewDictReaderFromPath(path)
 
@@ -242,8 +239,7 @@ func (i *Indexer) IndexFileList(path string, args ...interface{}) error {
 		return err
 	}
 
-	defer tm.Close()
-	go tm.Poll()
+	defer tm.Stop()
 
 	fh, err := os.Open(path)
 

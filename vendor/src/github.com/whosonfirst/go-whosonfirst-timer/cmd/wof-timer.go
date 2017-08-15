@@ -14,8 +14,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	defer tm.Close()
-	go tm.Poll()
+	defer tm.Stop()
 
 	time.Sleep(1000)
 }
