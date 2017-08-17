@@ -11,24 +11,35 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 )
 
 type IndexerFunc func(path string, info os.FileInfo, args ...interface{}) error
 
 type Indexer struct {
-	Mode string
-	Func IndexerFunc
-	Logger *log.WOFLogger
+	Mode     string
+	Func     IndexerFunc
+	Logger   *log.WOFLogger
+	Indexed  int64
+	Indexing chan bool
+	Counter  chan int64
+	count    int64
 }
 
 func NewIndexer(mode string, f IndexerFunc) (*Indexer, error) {
 
-        logger := log.SimpleWOFLogger("index")
+	logger := log.SimpleWOFLogger("index")
+	counter := make(chan int64)
+	indexing := make(chan bool)
 
 	i := Indexer{
-		Mode: mode,
-		Func: f,
-		Logger: logger,
+		Mode:     mode,
+		Func:     f,
+		Logger:   logger,
+		Counter:  counter,
+		Indexing: indexing,
+		Indexed:  0,
+		count:    0,
 	}
 
 	return &i, nil
@@ -60,6 +71,9 @@ func (i *Indexer) IndexPaths(paths []string, args ...interface{}) error {
 
 	defer tm.Stop()
 
+	i.increment()
+	defer i.decrement()
+
 	for _, path := range paths {
 
 		err := i.IndexPath(path, args...)
@@ -73,6 +87,9 @@ func (i *Indexer) IndexPaths(paths []string, args ...interface{}) error {
 }
 
 func (i *Indexer) IndexPath(path string, args ...interface{}) error {
+
+	i.increment()
+	defer i.decrement()
 
 	var abs_path string
 	var info os.FileInfo
@@ -149,7 +166,7 @@ func (i *Indexer) IndexPath(path string, args ...interface{}) error {
 
 	} else if i.Mode == "files" {
 
-		return i.Func(abs_path, info, args...)
+		return i.process(abs_path, info, args...)
 
 	} else {
 
@@ -168,8 +185,12 @@ func (i *Indexer) IndexDirectory(path string, args ...interface{}) error {
 
 	defer tm.Stop()
 
+	i.increment()
+	defer i.decrement()
+
 	cb := func(path string, info os.FileInfo) error {
-		return i.Func(path, info, args...)
+
+		return i.process(path, info, args...)
 	}
 
 	c := crawl.NewCrawler(path)
@@ -185,6 +206,9 @@ func (i *Indexer) IndexMetaFile(path string, data_root string, args ...interface
 	}
 
 	defer tm.Stop()
+
+	i.increment()
+	defer i.decrement()
 
 	reader, err := csv.NewDictReaderFromPath(path)
 
@@ -219,9 +243,7 @@ func (i *Indexer) IndexMetaFile(path string, data_root string, args ...interface
 			return err
 		}
 
-		i.Logger.Debug("process %s", file_path)
-
-		err = i.Func(file_path, file_info, args...)
+		err = i.process(file_path, file_info, args...)
 
 		if err != nil {
 			return err
@@ -240,6 +262,9 @@ func (i *Indexer) IndexFileList(path string, args ...interface{}) error {
 	}
 
 	defer tm.Stop()
+
+	i.increment()
+	defer i.decrement()
 
 	fh, err := os.Open(path)
 
@@ -263,7 +288,7 @@ func (i *Indexer) IndexFileList(path string, args ...interface{}) error {
 
 		i.Logger.Debug("process %s", file_path)
 
-		err = i.Func(file_path, file_info, args...)
+		err = i.process(file_path, file_info, args...)
 
 		if err != nil {
 			return err
@@ -271,5 +296,36 @@ func (i *Indexer) IndexFileList(path string, args ...interface{}) error {
 	}
 
 	return nil
+}
 
+func (i *Indexer) process(abs_path string, info os.FileInfo, args ...interface{}) error {
+
+	i.increment()
+	defer i.decrement()
+
+	i.Logger.Debug("process %s", abs_path)
+	err := i.Func(abs_path, info, args...)
+
+	if err != nil {
+		return err
+	}
+
+	atomic.AddInt64(&i.Indexed, 1)
+	return nil
+}
+
+func (i *Indexer) increment() {
+
+	i.Counter <- atomic.AddInt64(&i.count, 1)
+	i.Indexing <- true
+}
+
+func (i *Indexer) decrement() {
+
+	count := atomic.AddInt64(&i.count, -1)
+	i.Counter <- count
+
+	if count <= 0 {
+		i.Indexing <- false
+	}
 }

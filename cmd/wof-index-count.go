@@ -5,14 +5,17 @@ import (
 	"github.com/whosonfirst/go-whosonfirst-index"
 	"log"
 	"os"
+	"runtime"
 )
 
 func main() {
 
 	var mode = flag.String("mode", "repo", "")
+	var procs = flag.Int("processes", runtime.NumCPU()*2, "")
 
 	flag.Parse()
 
+	runtime.GOMAXPROCS(*procs)
 	count := 0
 
 	f := func(path string, info os.FileInfo, args ...interface{}) error {
@@ -33,6 +36,27 @@ func main() {
 		log.Fatal(err)
 	}
 
+	go func() {
+
+		for {
+
+			select {
+			case idx := <-i.Indexing:
+
+				if !idx {
+					log.Println("indexing is done")
+					return
+				}
+
+			case <-i.Counter:
+				// pass
+			default:
+				//
+			}
+		}
+
+	}()
+
 	for _, path := range flag.Args() {
 
 		err := i.IndexPath(path)
@@ -42,5 +66,5 @@ func main() {
 		}
 	}
 
-	log.Println(count)
+	log.Println(count, i.Indexed)
 }
