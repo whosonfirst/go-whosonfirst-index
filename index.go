@@ -313,8 +313,10 @@ func (i *Indexer) process(abs_path string, info os.FileInfo, args ...interface{}
 
 func (i *Indexer) increment() {
 
-	go func(){
-	   i.Indexing <- true
+	atomic.AddInt64(&i.count, 1)
+
+	go func() {
+		i.Indexing <- true
 	}()
 }
 
@@ -324,7 +326,7 @@ func (i *Indexer) decrement() {
 
 	if count <= 0 {
 
-		go func(){
+		go func() {
 			i.Indexing <- false
 		}()
 	}
