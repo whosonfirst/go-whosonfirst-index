@@ -36,26 +36,25 @@ func main() {
 		log.Fatal(err)
 	}
 
-	go func() {
+	/*
+		go func() {
 
-		for {
+			for {
 
-			select {
-			case idx := <-i.Indexing:
+				select {
+				case idx := <-i.Indexing:
 
-				if !idx {
-					log.Println("indexing is done")
-					return
+					if !idx {
+						log.Println("indexing is done")
+						return
+					}
+				default:
+					//
 				}
-
-			case <-i.Counter:
-				// pass
-			default:
-				//
 			}
-		}
 
-	}()
+		}()
+	*/
 
 	for _, path := range flag.Args() {
 

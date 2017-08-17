@@ -22,21 +22,18 @@ type Indexer struct {
 	Logger   *log.WOFLogger
 	Indexed  int64
 	Indexing chan bool
-	Counter  chan int64
 	count    int64
 }
 
 func NewIndexer(mode string, f IndexerFunc) (*Indexer, error) {
 
 	logger := log.SimpleWOFLogger("index")
-	counter := make(chan int64)
 	indexing := make(chan bool)
 
 	i := Indexer{
 		Mode:     mode,
 		Func:     f,
 		Logger:   logger,
-		Counter:  counter,
 		Indexing: indexing,
 		Indexed:  0,
 		count:    0,
@@ -316,16 +313,19 @@ func (i *Indexer) process(abs_path string, info os.FileInfo, args ...interface{}
 
 func (i *Indexer) increment() {
 
-	i.Counter <- atomic.AddInt64(&i.count, 1)
-	i.Indexing <- true
+	go func(){
+	   i.Indexing <- true
+	}()
 }
 
 func (i *Indexer) decrement() {
 
 	count := atomic.AddInt64(&i.count, -1)
-	i.Counter <- count
 
 	if count <= 0 {
-		i.Indexing <- false
+
+		go func(){
+			i.Indexing <- false
+		}()
 	}
 }
