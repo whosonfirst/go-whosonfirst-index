@@ -17,26 +17,23 @@ import (
 type IndexerFunc func(path string, info os.FileInfo, args ...interface{}) error
 
 type Indexer struct {
-	Mode     string
-	Func     IndexerFunc
-	Logger   *log.WOFLogger
-	Indexed  int64
-	Indexing chan bool
-	count    int64
+	Mode    string
+	Func    IndexerFunc
+	Logger  *log.WOFLogger
+	Indexed int64
+	count   int64
 }
 
 func NewIndexer(mode string, f IndexerFunc) (*Indexer, error) {
 
 	logger := log.SimpleWOFLogger("index")
-	indexing := make(chan bool)
 
 	i := Indexer{
-		Mode:     mode,
-		Func:     f,
-		Logger:   logger,
-		Indexing: indexing,
-		Indexed:  0,
-		count:    0,
+		Mode:    mode,
+		Func:    f,
+		Logger:  logger,
+		Indexed: 0,
+		count:   0,
 	}
 
 	return &i, nil
@@ -295,6 +292,15 @@ func (i *Indexer) IndexFileList(path string, args ...interface{}) error {
 	return nil
 }
 
+func (i *Indexer) IsIndexing() bool {
+
+	if atomic.LoadInt64(&i.count) > 0 {
+		return true
+	}
+
+	return false
+}
+
 func (i *Indexer) process(abs_path string, info os.FileInfo, args ...interface{}) error {
 
 	i.increment()
@@ -312,22 +318,9 @@ func (i *Indexer) process(abs_path string, info os.FileInfo, args ...interface{}
 }
 
 func (i *Indexer) increment() {
-
 	atomic.AddInt64(&i.count, 1)
-
-	go func() {
-		i.Indexing <- true
-	}()
 }
 
 func (i *Indexer) decrement() {
-
-	count := atomic.AddInt64(&i.count, -1)
-
-	if count <= 0 {
-
-		go func() {
-			i.Indexing <- false
-		}()
-	}
+	atomic.AddInt64(&i.count, -1)
 }

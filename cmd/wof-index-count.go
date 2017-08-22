@@ -36,26 +36,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	/*
-		go func() {
-
-			for {
-
-				select {
-				case idx := <-i.Indexing:
-
-					if !idx {
-						log.Println("indexing is done")
-						return
-					}
-				default:
-					//
-				}
-			}
-
-		}()
-	*/
-
 	for _, path := range flag.Args() {
 
 		err := i.IndexPath(path)
