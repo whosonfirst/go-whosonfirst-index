@@ -145,6 +145,10 @@ func (i *Indexer) IndexPath(path string, args ...interface{}) error {
 
 		for _, p := range parts {
 
+			if p == "STDIN" {
+				continue
+			}
+
 			_, err := os.Stat(p)
 
 			if os.IsNotExist(err) {
@@ -204,7 +208,22 @@ func (i *Indexer) IndexMetaFile(path string, data_root string, args ...interface
 	i.increment()
 	defer i.decrement()
 
-	reader, err := csv.NewDictReaderFromPath(path)
+	var fh io.Reader
+
+	if path == "STDIN" {
+		fh = bufio.NewReader(os.Stdin)
+	} else {
+
+		f, err := os.Open(path)
+
+		if err != nil {
+			return err
+		}
+
+		fh = f
+	}
+
+	reader, err := csv.NewDictReader(fh)
 
 	if err != nil {
 		return err
