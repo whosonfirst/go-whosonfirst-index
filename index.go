@@ -15,6 +15,10 @@ import (
 	"sync/atomic"
 )
 
+const (
+	STDIN = "STDIN"
+)
+
 type IndexerFunc func(fh io.Reader, args ...interface{}) error
 
 type Indexer struct {
@@ -90,7 +94,7 @@ func (i *Indexer) IndexPath(path string, args ...interface{}) error {
 
 	i.Logger.Debug("index %s in %s mode", path, i.Mode)
 
-	if path == "STDIN" {
+	if path == STDIN {
 		abs_path = path
 	} else if i.Mode != "meta" {
 
@@ -146,7 +150,7 @@ func (i *Indexer) IndexPath(path string, args ...interface{}) error {
 
 		for _, p := range parts {
 
-			if p == "STDIN" {
+			if p == STDIN {
 				continue
 			}
 
@@ -219,6 +223,8 @@ func (i *Indexer) IndexGeoJSONLSFile(path string, args ...interface{}) error {
 		return err
 	}
 
+	defer fh.Close()
+
 	// see this - we're using ReadLine because it's entirely possible
 	// that the raw GeoJSON (LS) will be too long for bufio.Scanner
 	// see also - https://golang.org/pkg/bufio/#Reader.ReadLine
@@ -226,7 +232,7 @@ func (i *Indexer) IndexGeoJSONLSFile(path string, args ...interface{}) error {
 
 	reader := bufio.NewReader(fh)
 	raw := bytes.NewBuffer([]byte(""))
-	
+
 	for {
 		fragment, is_prefix, err := reader.ReadLine()
 
@@ -245,7 +251,7 @@ func (i *Indexer) IndexGeoJSONLSFile(path string, args ...interface{}) error {
 		}
 
 		fh := bytes.NewReader(raw.Bytes())
-		
+
 		err = i.process(fh, args...)
 
 		if err != nil {
@@ -272,6 +278,12 @@ func (i *Indexer) IndexMetaFile(path string, data_root string, args ...interface
 	defer i.decrement()
 
 	fh, err := i.readerFromPath(path)
+
+	if err != nil {
+		return err
+	}
+
+	defer fh.Close()
 
 	reader, err := csv.NewDictReader(fh)
 
@@ -300,7 +312,7 @@ func (i *Indexer) IndexMetaFile(path string, data_root string, args ...interface
 		// (20170809/thisisaaronland)
 
 		file_path := filepath.Join(data_root, rel_path)
-		
+
 		err = i.process_path(file_path, args...)
 
 		if err != nil {
@@ -350,7 +362,7 @@ func (i *Indexer) IndexFileList(path string, args ...interface{}) error {
 	if err != nil {
 		return err
 	}
-	
+
 	return nil
 }
 
@@ -363,23 +375,16 @@ func (i *Indexer) IsIndexing() bool {
 	return false
 }
 
-func (i *Indexer) readerFromPath(abs_path string) (io.Reader, error) {
+func (i *Indexer) readerFromPath(abs_path string) (io.ReadCloser, error) {
 
-	var fh io.Reader
+	if abs_path == STDIN {
+		return os.Stdin, nil
+	}
 
-	if abs_path == "STDIN" {
+	fh, err := os.Open(abs_path)
 
-		fh = os.Stdin
-
-	} else {
-
-		f, err := os.Open(abs_path)
-
-		if err != nil {
-			return nil, err
-		}
-
-		fh = f
+	if err != nil {
+		return nil, err
 	}
 
 	return fh, nil
@@ -387,15 +392,15 @@ func (i *Indexer) readerFromPath(abs_path string) (io.Reader, error) {
 
 func (i *Indexer) process_path(abs_path string, args ...interface{}) error {
 
-     fh, err := os.Open(abs_path)
+	fh, err := os.Open(abs_path)
 
-     if err != nil {
-     	return err
-     }
+	if err != nil {
+		return err
+	}
 
-     defer fh.Close()
+	defer fh.Close()
 
-     return i.process(fh, args...)
+	return i.process(fh, args...)
 }
 
 func (i *Indexer) process(fh io.Reader, args ...interface{}) error {
