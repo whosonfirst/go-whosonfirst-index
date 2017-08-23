@@ -3,12 +3,14 @@ package index
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"errors"
 	"github.com/whosonfirst/go-whosonfirst-crawl"
 	"github.com/whosonfirst/go-whosonfirst-csv"
 	"github.com/whosonfirst/go-whosonfirst-log"
 	"github.com/whosonfirst/go-whosonfirst-timer"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -90,54 +92,48 @@ func (i *Indexer) IndexPath(path string, args ...interface{}) error {
 	i.increment()
 	defer i.decrement()
 
-	var abs_path string
-
 	i.Logger.Debug("index %s in %s mode", path, i.Mode)
-
-	if path == STDIN {
-		abs_path = path
-	} else if i.Mode != "meta" {
-
-		_path, err := filepath.Abs(path)
-
-		if err != nil {
-			return err
-		}
-
-		abs_path = _path
-	}
 
 	if i.Mode == "directory" {
 
-		return i.IndexDirectory(abs_path, args...)
+		return i.IndexDirectory(path, args...)
 
-	} else if i.Mode == "repo" {
+	} else if i.Mode == "feature" {
 
-		data := filepath.Join(abs_path, "data")
+		return i.IndexFile(path, args...)
 
-		_, err := os.Stat(data)
+	} else if i.Mode == "feature-collection" {
 
-		if err != nil {
-			return err
-		}
-
-		return i.IndexDirectory(data, args...)
+		return i.IndexGeoJSONFeatureCollection(path, args...)
 
 	} else if i.Mode == "filelist" {
 
-		return i.IndexFileList(abs_path, args...)
+		return i.IndexFileList(path, args...)
+
+	} else if i.Mode == "files" {
+
+		return i.IndexFile(path, args...)
 
 	} else if i.Mode == "geojson-ls" {
 
-		return i.IndexGeoJSONLSFile(abs_path, args...)
+		return i.IndexGeoJSONLS(path, args...)
 
 	} else if i.Mode == "meta" {
+
+		// please refactor all of this in to something... better
+		// (20170823/thisisaaronland)
 
 		parts := strings.Split(path, ":")
 
 		if len(parts) == 1 {
 
-			meta_root := filepath.Dir(parts[0])
+			abs_root, err := filepath.Abs(parts[0])
+
+			if err != nil {
+				return err
+			}
+
+			meta_root := filepath.Dir(abs_root)
 			repo_root := filepath.Dir(meta_root)
 			data_root := filepath.Join(repo_root, "data")
 
@@ -165,17 +161,54 @@ func (i *Indexer) IndexPath(path string, args ...interface{}) error {
 		data_root := parts[1]
 
 		return i.IndexMetaFile(meta_file, data_root, args...)
-		return nil
 
-	} else if i.Mode == "files" {
+	} else if i.Mode == "repo" {
 
-		return i.process_path(abs_path, args...)
+		abs_path, err := filepath.Abs(path)
+
+		if err != nil {
+			return err
+		}
+
+		data := filepath.Join(abs_path, "data")
+
+		_, err = os.Stat(data)
+
+		if err != nil {
+			return err
+		}
+
+		return i.IndexDirectory(data, args...)
 
 	} else {
 
 		return errors.New("Invalid indexer")
 	}
 
+}
+
+func (i *Indexer) IndexFile(path string, args ...interface{}) error {
+
+	tm, err := i.NewTimer("file", path)
+
+	if err != nil {
+		return err
+	}
+
+	defer tm.Stop()
+
+	i.increment()
+	defer i.decrement()
+
+	fh, err := i.readerFromPath(path)
+
+	if err != nil {
+		return err
+	}
+
+	defer fh.Close()
+
+	return i.process(fh, args...)
 }
 
 func (i *Indexer) IndexDirectory(path string, args ...interface{}) error {
@@ -191,6 +224,12 @@ func (i *Indexer) IndexDirectory(path string, args ...interface{}) error {
 	i.increment()
 	defer i.decrement()
 
+	abs_path, err := filepath.Abs(path)
+
+	if err != nil {
+		return err
+	}
+
 	cb := func(path string, info os.FileInfo) error {
 
 		if info.IsDir() {
@@ -200,11 +239,70 @@ func (i *Indexer) IndexDirectory(path string, args ...interface{}) error {
 		return i.process_path(path, args...)
 	}
 
-	c := crawl.NewCrawler(path)
+	c := crawl.NewCrawler(abs_path)
 	return c.Crawl(cb)
 }
 
-func (i *Indexer) IndexGeoJSONLSFile(path string, args ...interface{}) error {
+func (i *Indexer) IndexGeoJSONFeatureCollection(path string, args ...interface{}) error {
+
+	tm, err := i.NewTimer("geojson-fc", path)
+
+	if err != nil {
+		return err
+	}
+
+	defer tm.Stop()
+
+	i.increment()
+	defer i.decrement()
+
+	fh, err := i.readerFromPath(path)
+
+	if err != nil {
+		return err
+	}
+
+	defer fh.Close()
+
+	body, err := ioutil.ReadAll(fh)
+
+	if err != nil {
+		return err
+	}
+
+	type FC struct {
+		Type     string
+		Features []interface{}
+	}
+
+	var collection FC
+
+	err = json.Unmarshal(body, &collection)
+
+	if err != nil {
+		return err
+	}
+
+	for _, f := range collection.Features {
+
+		feature, err := json.Marshal(f)
+
+		if err != nil {
+			return err
+		}
+
+		fh := bytes.NewBuffer(feature)
+		err = i.process(fh, args...)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (i *Indexer) IndexGeoJSONLS(path string, args ...interface{}) error {
 
 	tm, err := i.NewTimer("geojson-ls", path)
 
@@ -336,10 +434,10 @@ func (i *Indexer) IndexFileList(path string, args ...interface{}) error {
 	i.increment()
 	defer i.decrement()
 
-	fh, err := os.Open(path)
+	fh, err := i.readerFromPath(path)
 
 	if err != nil {
-		return nil
+		return err
 	}
 
 	defer fh.Close()
@@ -390,7 +488,13 @@ func (i *Indexer) readerFromPath(abs_path string) (io.ReadCloser, error) {
 	return fh, nil
 }
 
-func (i *Indexer) process_path(abs_path string, args ...interface{}) error {
+func (i *Indexer) process_path(path string, args ...interface{}) error {
+
+	abs_path, err := filepath.Abs(path)
+
+	if err != nil {
+		return err
+	}
 
 	fh, err := os.Open(abs_path)
 
