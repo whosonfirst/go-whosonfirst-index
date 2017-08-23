@@ -236,8 +236,6 @@ func (i *Indexer) IndexGeoJSONLSFile(path string, args ...interface{}) error {
 	for {
 		fragment, is_prefix, err := reader.ReadLine()
 
-		i.Logger.Status("%d %v", lines, is_prefix)
-
 		if err == io.EOF {
 			break
 		}
