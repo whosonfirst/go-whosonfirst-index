@@ -3,8 +3,8 @@ package main
 import (
 	"flag"
 	"github.com/whosonfirst/go-whosonfirst-index"
+	"io"
 	"log"
-	"os"
 	"runtime"
 )
 
@@ -18,13 +18,7 @@ func main() {
 	runtime.GOMAXPROCS(*procs)
 	count := 0
 
-	f := func(path string, info os.FileInfo, args ...interface{}) error {
-
-		// log.Println(path)
-
-		if info.IsDir() {
-			return nil
-		}
+	f := func(fh io.Reader, args ...interface{}) error {
 
 		count += 1
 		return nil

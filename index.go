@@ -2,20 +2,20 @@ package index
 
 import (
 	"bufio"
+	"bytes"
 	"errors"
 	"github.com/whosonfirst/go-whosonfirst-crawl"
 	"github.com/whosonfirst/go-whosonfirst-csv"
 	"github.com/whosonfirst/go-whosonfirst-log"
 	"github.com/whosonfirst/go-whosonfirst-timer"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync/atomic"
 )
 
-type IndexerFunc func(path string, info os.FileInfo, args ...interface{}) error
+type IndexerFunc func(fh io.Reader, args ...interface{}) error
 
 type Indexer struct {
 	Mode    string
@@ -87,7 +87,6 @@ func (i *Indexer) IndexPath(path string, args ...interface{}) error {
 	defer i.decrement()
 
 	var abs_path string
-	var info os.FileInfo
 
 	i.Logger.Debug("index %s in %s mode", path, i.Mode)
 
@@ -101,14 +100,7 @@ func (i *Indexer) IndexPath(path string, args ...interface{}) error {
 			return err
 		}
 
-		_info, err := os.Stat(_path)
-
-		if err != nil {
-			return err
-		}
-
 		abs_path = _path
-		info = _info
 	}
 
 	if i.Mode == "directory" {
@@ -173,7 +165,7 @@ func (i *Indexer) IndexPath(path string, args ...interface{}) error {
 
 	} else if i.Mode == "files" {
 
-		return i.process(abs_path, info, args...)
+		return i.process_path(abs_path, args...)
 
 	} else {
 
@@ -197,7 +189,11 @@ func (i *Indexer) IndexDirectory(path string, args ...interface{}) error {
 
 	cb := func(path string, info os.FileInfo) error {
 
-		return i.process(path, info, args...)
+		if info.IsDir() {
+			return nil
+		}
+
+		return i.process_path(path, args...)
 	}
 
 	c := crawl.NewCrawler(path)
@@ -229,10 +225,8 @@ func (i *Indexer) IndexGeoJSONLSFile(path string, args ...interface{}) error {
 	// (20170822/thisisaaronland)
 
 	reader := bufio.NewReader(fh)
-	lines := 0
-
-	raw := ""
-
+	raw := bytes.NewBuffer([]byte(""))
+	
 	for {
 		fragment, is_prefix, err := reader.ReadLine()
 
@@ -244,70 +238,23 @@ func (i *Indexer) IndexGeoJSONLSFile(path string, args ...interface{}) error {
 			return err
 		}
 
-		// how do I append to a []byte thingy?
-
-		raw = raw + string(fragment)
+		raw.Write(fragment)
 
 		if is_prefix {
 			continue
 		}
 
-		lines += 1
-
-		whoami := os.Args[0]
-		whoami = filepath.Base(whoami)
-
-		// this - writing temp files - is not at all ideal but we're just
-		// going to live with it for now until I decide for certain that
-		// we really want to change IndexerFunc to accept a filehandle
-		// rather than a path... (20170822/thisisaaronland)
-
-		tmpdir, err := ioutil.TempDir("", whoami)
+		fh := bytes.NewReader(raw.Bytes())
+		
+		err = i.process(fh, args...)
 
 		if err != nil {
 			return err
 		}
 
-		defer os.RemoveAll(tmpdir) // clean up
-
-		fname := "00000.geojson"	// hack
-
-		tmpfile := filepath.Join(tmpdir, fname)
-
-		tmpfh, err := os.OpenFile(tmpfile, os.O_RDWR|os.O_CREATE, 0600)
-
-		if err != nil {
-			return err
-		}
-
-		_, err = tmpfh.Write([]byte(raw))
-
-		if err != nil {
-			return err
-		}
-
-		err = tmpfh.Close()
-
-		if err != nil {
-			return err
-		}
-
-		file_info, err := os.Stat(tmpfile)
-
-		if err != nil {
-			return err
-		}
-
-		err = i.process(tmpfile, file_info, args...)
-
-		if err != nil {
-			return err
-		}
-
-		raw = ""
+		raw.Reset()
 	}
 
-	i.Logger.Status("processed %d lines", lines)
 	return nil
 }
 
@@ -353,13 +300,8 @@ func (i *Indexer) IndexMetaFile(path string, data_root string, args ...interface
 		// (20170809/thisisaaronland)
 
 		file_path := filepath.Join(data_root, rel_path)
-		file_info, err := os.Stat(file_path)
-
-		if err != nil {
-			return err
-		}
-
-		err = i.process(file_path, file_info, args...)
+		
+		err = i.process_path(file_path, args...)
 
 		if err != nil {
 			return err
@@ -396,15 +338,7 @@ func (i *Indexer) IndexFileList(path string, args ...interface{}) error {
 
 		file_path := scanner.Text()
 
-		file_info, err := os.Stat(file_path)
-
-		if err != nil {
-			return err
-		}
-
-		i.Logger.Debug("process %s", file_path)
-
-		err = i.process(file_path, file_info, args...)
+		err = i.process_path(file_path, args...)
 
 		if err != nil {
 			return err
@@ -451,13 +385,25 @@ func (i *Indexer) readerFromPath(abs_path string) (io.Reader, error) {
 	return fh, nil
 }
 
-func (i *Indexer) process(abs_path string, info os.FileInfo, args ...interface{}) error {
+func (i *Indexer) process_path(abs_path string, args ...interface{}) error {
+
+     fh, err := os.Open(abs_path)
+
+     if err != nil {
+     	return err
+     }
+
+     defer fh.Close()
+
+     return i.process(fh, args...)
+}
+
+func (i *Indexer) process(fh io.Reader, args ...interface{}) error {
 
 	i.increment()
 	defer i.decrement()
 
-	i.Logger.Debug("process %s", abs_path)
-	err := i.Func(abs_path, info, args...)
+	err := i.Func(fh, args...)
 
 	if err != nil {
 		return err
