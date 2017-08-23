@@ -411,6 +411,12 @@ func (i *Indexer) IndexFileList(path string, args ...interface{}) error {
 		}
 	}
 
+	err = scanner.Err()
+
+	if err != nil {
+		return err
+	}
+	
 	return nil
 }
 
