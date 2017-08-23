@@ -24,7 +24,7 @@ const (
 
 type IndexerFunc func(fh io.Reader, ctx context.Context, args ...interface{}) error
 
-type ContextKey string
+type IndexerContextKey string
 
 type Indexer struct {
 	Mode    string
@@ -32,6 +32,26 @@ type Indexer struct {
 	Logger  *log.WOFLogger
 	Indexed int64
 	count   int64
+}
+
+func ContextForPath(path string) (context.Context, error) {
+
+	key := IndexerContextKey("path")
+	ctx := context.WithValue(context.Background(), key, path)
+
+	return ctx, nil
+}
+
+func PathForContext(ctx context.Context) (string, error) {
+
+	k := IndexerContextKey("path")
+	path := ctx.Value(k)
+
+	if path == nil {
+		return "", errors.New("path is not set")
+	}
+
+	return path.(string), nil
 }
 
 func NewIndexer(mode string, f IndexerFunc) (*Indexer, error) {
@@ -515,10 +535,13 @@ func (i *Indexer) process(fh io.Reader, path string, args ...interface{}) error 
 	i.increment()
 	defer i.decrement()
 
-	key := ContextKey("path")
-	ctx := context.WithValue(context.Background(), key, path)
+	ctx, err := ContextForPath(path)
 
-	err := i.Func(fh, ctx, args...)
+	if err != nil {
+		return err
+	}
+
+	err = i.Func(fh, ctx, args...)
 
 	if err != nil {
 		return err

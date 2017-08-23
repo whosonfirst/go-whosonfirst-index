@@ -21,8 +21,11 @@ func main() {
 
 	f := func(fh io.Reader, ctx context.Context, args ...interface{}) error {
 
-		k := index.ContextKey("path")
-		path := ctx.Value(k)
+		path, err := index.PathForContext(ctx)
+
+		if err != nil {
+			return err
+		}
 
 		log.Println("PATH", path)
 		count += 1
