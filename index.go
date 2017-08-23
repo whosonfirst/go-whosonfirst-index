@@ -3,6 +3,7 @@ package index
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"github.com/whosonfirst/go-whosonfirst-crawl"
@@ -21,7 +22,9 @@ const (
 	STDIN = "STDIN"
 )
 
-type IndexerFunc func(fh io.Reader, args ...interface{}) error
+type IndexerFunc func(fh io.Reader, ctx context.Context, args ...interface{}) error
+
+type ContextKey string
 
 type Indexer struct {
 	Mode    string
@@ -208,7 +211,7 @@ func (i *Indexer) IndexFile(path string, args ...interface{}) error {
 
 	defer fh.Close()
 
-	return i.process(fh, args...)
+	return i.process(fh, path, args...)
 }
 
 func (i *Indexer) IndexDirectory(path string, args ...interface{}) error {
@@ -292,7 +295,7 @@ func (i *Indexer) IndexGeoJSONFeatureCollection(path string, args ...interface{}
 		}
 
 		fh := bytes.NewBuffer(feature)
-		err = i.process(fh, args...)
+		err = i.process(fh, path, args...)
 
 		if err != nil {
 			return err
@@ -350,7 +353,7 @@ func (i *Indexer) IndexGeoJSONLS(path string, args ...interface{}) error {
 
 		fh := bytes.NewReader(raw.Bytes())
 
-		err = i.process(fh, args...)
+		err = i.process(fh, path, args...)
 
 		if err != nil {
 			return err
@@ -504,15 +507,18 @@ func (i *Indexer) process_path(path string, args ...interface{}) error {
 
 	defer fh.Close()
 
-	return i.process(fh, args...)
+	return i.process(fh, abs_path, args...)
 }
 
-func (i *Indexer) process(fh io.Reader, args ...interface{}) error {
+func (i *Indexer) process(fh io.Reader, path string, args ...interface{}) error {
 
 	i.increment()
 	defer i.decrement()
 
-	err := i.Func(fh, args...)
+	key := ContextKey("path")
+	ctx := context.WithValue(context.Background(), key, path)
+
+	err := i.Func(fh, ctx, args...)
 
 	if err != nil {
 		return err

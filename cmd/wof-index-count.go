@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"github.com/whosonfirst/go-whosonfirst-index"
 	"io"
@@ -18,8 +19,12 @@ func main() {
 	runtime.GOMAXPROCS(*procs)
 	count := 0
 
-	f := func(fh io.Reader, args ...interface{}) error {
+	f := func(fh io.Reader, ctx context.Context, args ...interface{}) error {
 
+		k := index.ContextKey("path")
+		path := ctx.Value(k)
+
+		log.Println("PATH", path)
 		count += 1
 		return nil
 	}
