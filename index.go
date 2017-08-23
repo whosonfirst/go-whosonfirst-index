@@ -8,6 +8,7 @@ import (
 	"github.com/whosonfirst/go-whosonfirst-log"
 	"github.com/whosonfirst/go-whosonfirst-timer"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -88,7 +89,11 @@ func (i *Indexer) IndexPath(path string, args ...interface{}) error {
 	var abs_path string
 	var info os.FileInfo
 
-	if i.Mode != "meta" {
+	i.Logger.Debug("index %s in %s mode", path, i.Mode)
+
+	if path == "STDIN" {
+		abs_path = path
+	} else if i.Mode != "meta" {
 
 		_path, err := filepath.Abs(path)
 
@@ -125,6 +130,10 @@ func (i *Indexer) IndexPath(path string, args ...interface{}) error {
 	} else if i.Mode == "filelist" {
 
 		return i.IndexFileList(abs_path, args...)
+
+	} else if i.Mode == "geojson-ls" {
+
+		return i.IndexGeoJSONLSFile(abs_path, args...)
 
 	} else if i.Mode == "meta" {
 
@@ -195,6 +204,78 @@ func (i *Indexer) IndexDirectory(path string, args ...interface{}) error {
 	return c.Crawl(cb)
 }
 
+func (i *Indexer) IndexGeoJSONLSFile(path string, args ...interface{}) error {
+
+	tm, err := i.NewTimer("geojson-ls", path)
+
+	if err != nil {
+		return err
+	}
+
+	defer tm.Stop()
+
+	i.increment()
+	defer i.decrement()
+
+	fh, err := i.readerFromPath(path)
+
+	if err != nil {
+		return err
+	}
+
+	scanner := bufio.NewScanner(fh)
+
+	for scanner.Scan() {
+
+		raw := scanner.Text()
+
+		whoami := os.Args[0]
+		whoami = filepath.Base(whoami)
+
+		// this - writing temp files - is not at all ideal but we're just
+		// going to live with it for now until I decide for certain that
+		// we really want to change IndexerFunc to accept a filehandle
+		// rather than a path... (20170822/thisisaaronland)
+
+		tmpfile, err := ioutil.TempFile("", whoami)
+
+		if err != nil {
+			return err
+		}
+
+		defer func() {
+			// i.Logger.Status("REMOVE %s", tmpfile.Name())
+			os.Remove(tmpfile.Name())
+		}()
+
+		_, err = tmpfile.Write([]byte(raw))
+
+		if err != nil {
+			return err
+		}
+
+		err = tmpfile.Close()
+
+		if err != nil {
+			return err
+		}
+
+		file_info, err := os.Stat(tmpfile.Name())
+
+		if err != nil {
+			return err
+		}
+
+		err = i.process(tmpfile.Name(), file_info, args...)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (i *Indexer) IndexMetaFile(path string, data_root string, args ...interface{}) error {
 
 	tm, err := i.NewTimer("metafile", path)
@@ -208,20 +289,7 @@ func (i *Indexer) IndexMetaFile(path string, data_root string, args ...interface
 	i.increment()
 	defer i.decrement()
 
-	var fh io.Reader
-
-	if path == "STDIN" {
-		fh = bufio.NewReader(os.Stdin)
-	} else {
-
-		f, err := os.Open(path)
-
-		if err != nil {
-			return err
-		}
-
-		fh = f
-	}
+	fh, err := i.readerFromPath(path)
 
 	reader, err := csv.NewDictReader(fh)
 
@@ -318,6 +386,27 @@ func (i *Indexer) IsIndexing() bool {
 	}
 
 	return false
+}
+
+func (i *Indexer) readerFromPath(abs_path string) (io.Reader, error) {
+
+	var fh io.Reader
+
+	if abs_path == "STDIN" {
+
+		fh = bufio.NewReader(os.Stdin)
+	} else {
+
+		f, err := os.Open(abs_path)
+
+		if err != nil {
+			return nil, err
+		}
+
+		fh = f
+	}
+
+	return fh, nil
 }
 
 func (i *Indexer) process(abs_path string, info os.FileInfo, args ...interface{}) error {
