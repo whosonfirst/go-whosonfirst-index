@@ -223,11 +223,38 @@ func (i *Indexer) IndexGeoJSONLSFile(path string, args ...interface{}) error {
 		return err
 	}
 
-	scanner := bufio.NewScanner(fh)
+	// see this - we're using ReadLine because it's entirely possible
+	// that the raw GeoJSON (LS) will be too long for bufio.Scanner
+	// see also - https://golang.org/pkg/bufio/#Reader.ReadLine
+	// (20170822/thisisaaronland)
 
-	for scanner.Scan() {
+	reader := bufio.NewReader(fh)
+	lines := 0
 
-		raw := scanner.Text()
+	raw := ""
+
+	for {
+		fragment, is_prefix, err := reader.ReadLine()
+
+		i.Logger.Status("%d %v", lines, is_prefix)
+
+		if err == io.EOF {
+			break
+		}
+
+		if err != nil {
+			return err
+		}
+
+		// how do I append to a []byte thingy?
+
+		raw = raw + string(fragment)
+
+		if is_prefix {
+			continue
+		}
+
+		lines += 1
 
 		whoami := os.Args[0]
 		whoami = filepath.Base(whoami)
@@ -244,7 +271,6 @@ func (i *Indexer) IndexGeoJSONLSFile(path string, args ...interface{}) error {
 		}
 
 		defer func() {
-			// i.Logger.Status("REMOVE %s", tmpfile.Name())
 			os.Remove(tmpfile.Name())
 		}()
 
@@ -271,8 +297,11 @@ func (i *Indexer) IndexGeoJSONLSFile(path string, args ...interface{}) error {
 		if err != nil {
 			return err
 		}
+
+		raw = ""
 	}
 
+	i.Logger.Status("processed %d lines", lines)
 	return nil
 }
 
@@ -394,7 +423,8 @@ func (i *Indexer) readerFromPath(abs_path string) (io.Reader, error) {
 
 	if abs_path == "STDIN" {
 
-		fh = bufio.NewReader(os.Stdin)
+		fh = os.Stdin
+
 	} else {
 
 		f, err := os.Open(abs_path)
