@@ -262,35 +262,43 @@ func (i *Indexer) IndexGeoJSONLSFile(path string, args ...interface{}) error {
 		// we really want to change IndexerFunc to accept a filehandle
 		// rather than a path... (20170822/thisisaaronland)
 
-		tmpfile, err := ioutil.TempFile("", whoami)
+		tmpdir, err := ioutil.TempDir("", whoami)
 
 		if err != nil {
 			return err
 		}
 
-		defer func() {
-			os.Remove(tmpfile.Name())
-		}()
+		defer os.RemoveAll(tmpdir) // clean up
 
-		_, err = tmpfile.Write([]byte(raw))
+		fname := "00000.geojson"	// hack
 
-		if err != nil {
-			return err
-		}
+		tmpfile := filepath.Join(tmpdir, fname)
 
-		err = tmpfile.Close()
+		tmpfh, err := os.OpenFile(tmpfile, os.O_RDWR|os.O_CREATE, 0600)
 
 		if err != nil {
 			return err
 		}
 
-		file_info, err := os.Stat(tmpfile.Name())
+		_, err = tmpfh.Write([]byte(raw))
 
 		if err != nil {
 			return err
 		}
 
-		err = i.process(tmpfile.Name(), file_info, args...)
+		err = tmpfh.Close()
+
+		if err != nil {
+			return err
+		}
+
+		file_info, err := os.Stat(tmpfile)
+
+		if err != nil {
+			return err
+		}
+
+		err = i.process(tmpfile, file_info, args...)
 
 		if err != nil {
 			return err
