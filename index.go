@@ -35,7 +35,17 @@ type Indexer struct {
 }
 
 func Modes() []string {
-	return []string{"directory", "feature", "feature-collection", "geojson-ls", "meta", "path", "repo"}
+
+	return []string{
+		"directory",
+		"feature",
+		"feature-collection",
+		"files",
+		"geojson-ls",
+		"meta",
+		"path",
+		"repo",
+	}
 }
 
 func ContextForPath(path string) (context.Context, error) {
