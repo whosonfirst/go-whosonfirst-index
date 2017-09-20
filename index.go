@@ -533,7 +533,7 @@ func (i *Indexer) process(fh io.Reader, path string, args ...interface{}) error 
      	t1 := time.Now()
 
 	defer func(){
-		t2 := time.Since()
+		t2 := time.Since(t1)
 		i.Logger.Debug("time to process record '%s' %v", path, t2)		
 	}()
 	
