@@ -9,7 +9,6 @@ import (
 	"github.com/whosonfirst/go-whosonfirst-crawl"
 	"github.com/whosonfirst/go-whosonfirst-csv"
 	"github.com/whosonfirst/go-whosonfirst-log"
-	"github.com/whosonfirst/go-whosonfirst-timer"
 	"io"
 	"io/ioutil"
 	"os"
@@ -83,31 +82,7 @@ func NewIndexer(mode string, f IndexerFunc) (*Indexer, error) {
 	return &i, nil
 }
 
-func (i *Indexer) NewTimer(mode string, path string) (*timer.Timer, error) {
-
-	cb := func(t timer.Timing) {
-		i.Logger.Status("%s %s %v", mode, path, t.Duration())
-	}
-
-	tm, err := timer.NewDefaultTimer()
-
-	if err != nil {
-		return nil, err
-	}
-
-	tm.Callback = cb
-	return tm, nil
-}
-
 func (i *Indexer) IndexPaths(paths []string, args ...interface{}) error {
-
-	tm, err := i.NewTimer("paths", "...")
-
-	if err != nil {
-		return err
-	}
-
-	defer tm.Stop()
 
 	i.increment()
 	defer i.decrement()
@@ -226,14 +201,6 @@ func (i *Indexer) IndexPath(path string, args ...interface{}) error {
 
 func (i *Indexer) IndexFile(path string, args ...interface{}) error {
 
-	tm, err := i.NewTimer("file", path)
-
-	if err != nil {
-		return err
-	}
-
-	defer tm.Stop()
-
 	i.increment()
 	defer i.decrement()
 
@@ -249,14 +216,6 @@ func (i *Indexer) IndexFile(path string, args ...interface{}) error {
 }
 
 func (i *Indexer) IndexDirectory(path string, args ...interface{}) error {
-
-	tm, err := i.NewTimer("directory", path)
-
-	if err != nil {
-		return err
-	}
-
-	defer tm.Stop()
 
 	i.increment()
 	defer i.decrement()
@@ -281,14 +240,6 @@ func (i *Indexer) IndexDirectory(path string, args ...interface{}) error {
 }
 
 func (i *Indexer) IndexGeoJSONFeatureCollection(path string, args ...interface{}) error {
-
-	tm, err := i.NewTimer("geojson-fc", path)
-
-	if err != nil {
-		return err
-	}
-
-	defer tm.Stop()
 
 	i.increment()
 	defer i.decrement()
@@ -340,14 +291,6 @@ func (i *Indexer) IndexGeoJSONFeatureCollection(path string, args ...interface{}
 }
 
 func (i *Indexer) IndexGeoJSONLS(path string, args ...interface{}) error {
-
-	tm, err := i.NewTimer("geojson-ls", path)
-
-	if err != nil {
-		return err
-	}
-
-	defer tm.Stop()
 
 	i.increment()
 	defer i.decrement()
@@ -401,14 +344,6 @@ func (i *Indexer) IndexGeoJSONLS(path string, args ...interface{}) error {
 
 func (i *Indexer) IndexMetaFile(path string, data_root string, args ...interface{}) error {
 
-	tm, err := i.NewTimer("metafile", path)
-
-	if err != nil {
-		return err
-	}
-
-	defer tm.Stop()
-
 	i.increment()
 	defer i.decrement()
 
@@ -459,14 +394,6 @@ func (i *Indexer) IndexMetaFile(path string, data_root string, args ...interface
 }
 
 func (i *Indexer) IndexFileList(path string, args ...interface{}) error {
-
-	tm, err := i.NewTimer("filelist", path)
-
-	if err != nil {
-		return err
-	}
-
-	defer tm.Stop()
 
 	i.increment()
 	defer i.decrement()
