@@ -89,7 +89,7 @@ func (i *Indexer) IndexPaths(paths []string, args ...interface{}) error {
 
 	defer func(){
 		t2 := time.Since(t1)
-		i.Logger.Status("time to index %d paths %v", len(paths), t2)		   
+		i.Logger.Status("time to index paths (%d) %v", len(paths), t2)		   
 	}()
 	
 	i.increment()
