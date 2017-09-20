@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync/atomic"
+	"time"		
 )
 
 const (
@@ -84,6 +85,13 @@ func NewIndexer(mode string, f IndexerFunc) (*Indexer, error) {
 
 func (i *Indexer) IndexPaths(paths []string, args ...interface{}) error {
 
+	t1 := time.Now()
+
+	defer func(){
+		t2 := time.Since(t1)
+		i.Logger.Status("time to index %d paths %v", len(paths), t2)		   
+	}()
+	
 	i.increment()
 	defer i.decrement()
 
@@ -100,6 +108,13 @@ func (i *Indexer) IndexPaths(paths []string, args ...interface{}) error {
 }
 
 func (i *Indexer) IndexPath(path string, args ...interface{}) error {
+
+	t1 := time.Now()
+
+	defer func(){
+		t2 := time.Since(t1)
+		i.Logger.Status("time to index path '%s' %v", path, t2)
+	}()
 
 	i.increment()
 	defer i.decrement()
@@ -201,6 +216,13 @@ func (i *Indexer) IndexPath(path string, args ...interface{}) error {
 
 func (i *Indexer) IndexFile(path string, args ...interface{}) error {
 
+	t1 := time.Now()
+
+	defer func(){
+		t2 := time.Since(t1)
+		i.Logger.Status("time to index file '%s' %v", path, t2)
+	}()
+
 	i.increment()
 	defer i.decrement()
 
@@ -216,6 +238,13 @@ func (i *Indexer) IndexFile(path string, args ...interface{}) error {
 }
 
 func (i *Indexer) IndexDirectory(path string, args ...interface{}) error {
+
+	t1 := time.Now()
+
+	defer func(){
+		t2 := time.Since(t1)
+		i.Logger.Status("time to index directory '%s' %v", path, t2)
+	}()
 
 	i.increment()
 	defer i.decrement()
@@ -240,6 +269,13 @@ func (i *Indexer) IndexDirectory(path string, args ...interface{}) error {
 }
 
 func (i *Indexer) IndexGeoJSONFeatureCollection(path string, args ...interface{}) error {
+
+	t1 := time.Now()
+
+	defer func(){
+		t2 := time.Since(t1)
+		i.Logger.Status("time to index feature collection '%s' %v", path, t2)
+	}()
 
 	i.increment()
 	defer i.decrement()
@@ -291,6 +327,13 @@ func (i *Indexer) IndexGeoJSONFeatureCollection(path string, args ...interface{}
 }
 
 func (i *Indexer) IndexGeoJSONLS(path string, args ...interface{}) error {
+
+	t1 := time.Now()
+
+	defer func(){
+		t2 := time.Since(t1)
+		i.Logger.Status("time to index geojson-ls '%s' %v", path, t2)
+	}()
 
 	i.increment()
 	defer i.decrement()
@@ -344,6 +387,13 @@ func (i *Indexer) IndexGeoJSONLS(path string, args ...interface{}) error {
 
 func (i *Indexer) IndexMetaFile(path string, data_root string, args ...interface{}) error {
 
+	t1 := time.Now()
+
+	defer func(){
+		t2 := time.Since(t1)
+		i.Logger.Status("time to index meta file '%s' %v", path, t2)
+	}()
+
 	i.increment()
 	defer i.decrement()
 
@@ -394,6 +444,13 @@ func (i *Indexer) IndexMetaFile(path string, data_root string, args ...interface
 }
 
 func (i *Indexer) IndexFileList(path string, args ...interface{}) error {
+
+	t1 := time.Now()
+
+	defer func(){
+		t2 := time.Since(t1)
+		i.Logger.Status("time to index file list '%s' %v", path, t2)
+	}()
 
 	i.increment()
 	defer i.decrement()
