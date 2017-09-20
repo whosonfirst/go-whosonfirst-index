@@ -530,6 +530,13 @@ func (i *Indexer) process_path(path string, args ...interface{}) error {
 
 func (i *Indexer) process(fh io.Reader, path string, args ...interface{}) error {
 
+     	t1 := time.Now()
+
+	defer func(){
+		t2 := time.Since()
+		i.Logger.Debug("time to process record '%s' %v", path, t2)		
+	}()
+	
 	i.increment()
 	defer i.decrement()
 
