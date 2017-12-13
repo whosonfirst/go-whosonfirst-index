@@ -48,6 +48,7 @@ func Modes() []string {
 		"meta",
 		"path",
 		"repo",
+		"sqlite",			
 	}
 }
 
