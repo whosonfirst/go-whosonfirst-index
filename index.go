@@ -8,6 +8,8 @@ import (
 	"errors"
 	"github.com/whosonfirst/go-whosonfirst-crawl"
 	"github.com/whosonfirst/go-whosonfirst-csv"
+	"github.com/whosonfirst/go-whosonfirst-sqlite/database"
+	"github.com/whosonfirst/go-whosonfirst-sqlite/utils"		
 	"github.com/whosonfirst/go-whosonfirst-log"
 	"io"
 	"io/ioutil"
@@ -207,6 +209,10 @@ func (i *Indexer) IndexPath(path string, args ...interface{}) error {
 
 		return i.IndexDirectory(data, args...)
 
+	} else if i.Mode == "sqlite" {
+
+		return i.IndexSQLiteDB(path, args...)
+		
 	} else {
 
 		return errors.New("Invalid indexer")
@@ -441,6 +447,29 @@ func (i *Indexer) IndexMetaFile(path string, data_root string, args ...interface
 	}
 
 	return nil
+}
+
+func (i *Indexer) IndexSQLiteDB(path string, args ...interface{}) error {
+
+	db, err := database.NewDB(path)
+
+	if err != nil {
+		return err
+	}
+	
+	defer db.Close()
+
+	has_table, err := utils.HasTable(db, "geojson")
+
+	if err != nil {
+		return err
+	}
+
+	if !has_table {
+		return errors.New("database is missing a geojson table")
+	}
+
+	return errors.New("Please write me")
 }
 
 func (i *Indexer) IndexFileList(path string, args ...interface{}) error {
