@@ -492,16 +492,21 @@ func (i *Indexer) IndexSQLiteDB(path string, args ...interface{}) error {
 
 	// https://github.com/whosonfirst/go-whosonfirst-index/issues/5
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	cpus := runtime.NumCPU()
-	throttle := make(chan bool, cpus)
+	throttle_ch := make(chan bool, cpus)
 
 	for i := 0; i < cpus; i++ {
-		throttle <- true
+		throttle_ch <- true
 	}
+
+	error_ch := make(chan error)
 
 	for rows.Next() {
 
-		<-throttle
+		<-throttle_ch
 
 		var wofid int64
 		var body string
@@ -512,31 +517,43 @@ func (i *Indexer) IndexSQLiteDB(path string, args ...interface{}) error {
 			return err
 		}
 
-		go func(wofid int64, body string, throttle chan bool) {
+		go func(ctx context.Context, wofid int64, body string, throttle_ch chan bool, error_ch chan error) {
 
 			defer func() {
-				throttle <- true
+				throttle_ch <- true
 			}()
 
-			// uri := fmt.Sprintf("sqlite://%s#geojson:%d", path, wofid)
+			select {
+			case <-ctx.Done():
+				return
+			default:
 
-			// see the way we're passing in STDIN and not uri as the path?
-			// that because we call ctx, err := ContextForPath(path) in the
-			// process() method and since uri won't be there nothing will
-			// get indexed - it's not ideal it's just what it is today...
-			// (20171213/thisisaaronland)
+				// uri := fmt.Sprintf("sqlite://%s#geojson:%d", path, wofid)
 
-			fh := strings.NewReader(body)
-			err = i.process(fh, STDIN)
+				// see the way we're passing in STDIN and not uri as the path?
+				// that because we call ctx, err := ContextForPath(path) in the
+				// process() method and since uri won't be there nothing will
+				// get indexed - it's not ideal it's just what it is today...
+				// (20171213/thisisaaronland)
 
-			// need to to figure out how best to propogate theses..
+				fh := strings.NewReader(body)
+				err := i.process(fh, STDIN)
 
-			if err != nil {
-				// return err
+				// need to to figure out how best to propogate theses..
+
+				if err != nil {
+					error_ch <- err
+				}
+
 			}
 
-		}(wofid, body, throttle)
+		}(ctx, wofid, body, throttle_ch, error_ch)
 
+		select {
+		case e := <-error_ch:
+			cancel()
+			return e
+		}
 	}
 
 	err = rows.Err()
