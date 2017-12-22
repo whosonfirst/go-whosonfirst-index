@@ -489,6 +489,8 @@ func (i *Indexer) IndexSQLiteDB(path string, args ...interface{}) error {
 		return err
 	}
 
+	// https://github.com/whosonfirst/go-whosonfirst-index/issues/5
+
 	for rows.Next() {
 
 		var wofid int64
