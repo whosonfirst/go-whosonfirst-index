@@ -20,6 +20,7 @@ rmdeps:
 deps:
 	@GOPATH=$(GOPATH) go get -u "github.com/whosonfirst/go-whosonfirst-crawl"
 	@GOPATH=$(GOPATH) go get -u "github.com/whosonfirst/go-whosonfirst-csv"
+	@GOPATH=$(GOPATH) go get -u "github.com/whosonfirst/go-whosonfirst-geojson-v2"
 	@GOPATH=$(GOPATH) go get -u "github.com/whosonfirst/go-whosonfirst-sqlite/database"
 	@GOPATH=$(GOPATH) go get -u "github.com/whosonfirst/go-whosonfirst-log"
 	@GOPATH=$(GOPATH) go get -u "github.com/whosonfirst/go-whosonfirst-uri"
@@ -37,4 +38,5 @@ fmt:
 	go fmt *.go
 
 bin:	self
-	@GOPATH=$(GOPATH) go build -o bin/wof-index-count cmd/wof-index-count.go	
+	@GOPATH=$(GOPATH) go build -o bin/wof-index-count cmd/wof-index-count.go
+	@GOPATH=$(GOPATH) go build -o bin/alt cmd/alt.go	
