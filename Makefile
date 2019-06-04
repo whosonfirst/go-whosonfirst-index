@@ -4,4 +4,4 @@ fmt:
 	go fmt *.go
 
 tools:
-	go build -o bin/wof-index-count cmd/wof-index-count/main.go
+	go build -mod vendor -o bin/wof-index-count cmd/wof-index-count/main.go

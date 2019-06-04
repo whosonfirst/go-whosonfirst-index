@@ -14,7 +14,7 @@ github.com/whosonfirst/go-whosonfirst-log
 # github.com/whosonfirst/go-whosonfirst-sources v0.1.0
 github.com/whosonfirst/go-whosonfirst-sources
 github.com/whosonfirst/go-whosonfirst-sources/sources
-# github.com/whosonfirst/go-whosonfirst-sqlite v0.0.2
+# github.com/whosonfirst/go-whosonfirst-sqlite v0.1.0
 github.com/whosonfirst/go-whosonfirst-sqlite/database
 github.com/whosonfirst/go-whosonfirst-sqlite/utils
 github.com/whosonfirst/go-whosonfirst-sqlite
