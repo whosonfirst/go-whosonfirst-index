@@ -41,6 +41,7 @@ type Indexer struct {
 func Modes() []string {
 
 	return []string{
+		"clone",
 		"directory",
 		"feature",
 		"feature-collection",
@@ -126,7 +127,20 @@ func (i *Indexer) IndexPath(path string, args ...interface{}) error {
 
 	i.Logger.Debug("index %s in %s mode", path, i.Mode)
 
-	if i.Mode == "directory" {
+	if i.Mode == "clone" {
+
+		/*
+
+			- parse path in to URL, mode (https, git) and target
+			- fetch repo as target
+			- index directory (as in i.IndexDirectory or really IndexRepo which doesn't exist...
+			- remove target
+
+		*/
+
+		return errors.New("PLEASE IMPLEMENT ME")
+
+	} else if i.Mode == "directory" {
 
 		return i.IndexDirectory(path, args...)
 
