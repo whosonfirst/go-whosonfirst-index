@@ -12,6 +12,7 @@ import (
 	"github.com/whosonfirst/go-whosonfirst-sqlite/database"
 	"github.com/whosonfirst/go-whosonfirst-sqlite/utils"
 	"gopkg.in/src-d/go-git.v4"
+	"gopkg.in/src-d/go-git.v4/plumbing/protocol/packp/sideband"
 	"io"
 	"io/ioutil"
 	// golog "log"
@@ -37,6 +38,19 @@ type Indexer struct {
 	Logger  *log.WOFLogger
 	Indexed int64
 	count   int64
+}
+
+// used by the IndexGit stuff
+// https://godoc.org/gopkg.in/src-d/go-git.v4/plumbing/protocol/packp/sideband#Progress
+
+type WOFLoggerProgress struct {
+	sideband.Progress
+	logger *log.WOFLogger
+}
+
+func (p *WOFLoggerProgress) Write(msg []byte) (int, error) {
+	p.logger.Status(string(msg))
+	return -1, nil
 }
 
 func Modes() []string {
@@ -239,13 +253,17 @@ func (i *Indexer) IndexGit(path string, args ...interface{}) error {
 
 	defer os.RemoveAll(tempdir)
 
+	pr := &WOFLoggerProgress{
+		logger: i.Logger,
+	}
+
 	// something something something auth-y bits
 	// https://godoc.org/gopkg.in/src-d/go-git.v4#CloneOptions
 
 	opts := &git.CloneOptions{
 		URL:      path,
 		Depth:    1,
-		Progress: os.Stdout,
+		Progress: pr,
 	}
 
 	_, err = git.PlainClone(tempdir, false, opts)
