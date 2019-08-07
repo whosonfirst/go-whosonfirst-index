@@ -129,16 +129,7 @@ func (i *Indexer) IndexPath(path string, args ...interface{}) error {
 
 	if i.Mode == "clone" {
 
-		/*
-
-			- parse path in to URL, mode (https, git) and target
-			- fetch repo as target
-			- index directory (as in i.IndexDirectory or really IndexRepo which doesn't exist...
-			- remove target
-
-		*/
-
-		return errors.New("PLEASE IMPLEMENT ME")
+		return i.IndexClone(path, args...)
 
 	} else if i.Mode == "directory" {
 
@@ -216,15 +207,7 @@ func (i *Indexer) IndexPath(path string, args ...interface{}) error {
 			return err
 		}
 
-		data := filepath.Join(abs_path, "data")
-
-		_, err = os.Stat(data)
-
-		if err != nil {
-			return err
-		}
-
-		return i.IndexDirectory(data, args...)
+		return i.IndexRepo(abs_path, args...)
 
 	} else if i.Mode == "sqlite" {
 
@@ -241,6 +224,33 @@ func (i *Indexer) IndexPath(path string, args ...interface{}) error {
 		return errors.New("Invalid indexer")
 	}
 
+}
+
+func (i *Indexer) IndexClone(path string, args ...interface{}) error {
+
+	/*
+
+		- parse path in to URL, mode (https, git) and target
+		- fetch repo as target
+		- index directory (as in i.IndexDirectory or really IndexRepo which doesn't exist...
+		- remove target
+
+	*/
+
+	return errors.New("PLEASE IMPLEMENT ME")
+}
+
+func (i *Indexer) IndexRepo(abs_path string, args ...interface{}) error {
+
+	data := filepath.Join(abs_path, "data")
+
+	_, err := os.Stat(data)
+
+	if err != nil {
+		return err
+	}
+
+	return i.IndexDirectory(data, args...)
 }
 
 func (i *Indexer) IndexFile(path string, args ...interface{}) error {
