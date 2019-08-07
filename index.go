@@ -6,13 +6,12 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/src-d/go-git"
-	// "gopkg.in/src-d/go-git.v4"
 	"github.com/whosonfirst/go-whosonfirst-crawl"
 	"github.com/whosonfirst/go-whosonfirst-csv"
 	"github.com/whosonfirst/go-whosonfirst-log"
 	"github.com/whosonfirst/go-whosonfirst-sqlite/database"
 	"github.com/whosonfirst/go-whosonfirst-sqlite/utils"
+	"gopkg.in/src-d/go-git.v4"
 	"io"
 	"io/ioutil"
 	// golog "log"
@@ -230,22 +229,22 @@ func (i *Indexer) IndexPath(path string, args ...interface{}) error {
 
 func (i *Indexer) IndexClone(path string, args ...interface{}) error {
 
-	tempdir, err := ioutil.TempDir("", "clone")
+	repo_name := filepath.Base(path)
+
+	tempdir, err := ioutil.TempDir("", repo_name)
 
 	if err != nil {
 		return err
 	}
 
 	defer os.RemoveAll(tempdir)
-	
-	repo_name := filepath.Base(path)
-	
+
 	opts := &git.CloneOptions{
 		URL:      path,
 		Progress: os.Stdout,
 	}
-	
-	_, err := git.PlainClone(tempdir, false, opts)
+
+	_, err = git.PlainClone(tempdir, false, opts)
 
 	if err != nil {
 		return err

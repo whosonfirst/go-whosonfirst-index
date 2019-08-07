@@ -32,7 +32,7 @@ func main() {
 
 		i := atomic.AddInt64(&count, 1)
 
-		log.Println("PATH", path, i)
+		// log.Println("PATH", path, i)
 		return nil
 	}
 
