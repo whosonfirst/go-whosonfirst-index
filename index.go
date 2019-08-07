@@ -42,7 +42,7 @@ type Indexer struct {
 func Modes() []string {
 
 	return []string{
-		"clone",
+		"git",
 		"directory",
 		"feature",
 		"feature-collection",
@@ -128,9 +128,9 @@ func (i *Indexer) IndexPath(path string, args ...interface{}) error {
 
 	i.Logger.Debug("index %s in %s mode", path, i.Mode)
 
-	if i.Mode == "clone" {
+	if i.Mode == "git" {
 
-		return i.IndexClone(path, args...)
+		return i.IndexGit(path, args...)
 
 	} else if i.Mode == "directory" {
 
@@ -227,7 +227,7 @@ func (i *Indexer) IndexPath(path string, args ...interface{}) error {
 
 }
 
-func (i *Indexer) IndexClone(path string, args ...interface{}) error {
+func (i *Indexer) IndexGit(path string, args ...interface{}) error {
 
 	repo_name := filepath.Base(path)
 
@@ -239,8 +239,12 @@ func (i *Indexer) IndexClone(path string, args ...interface{}) error {
 
 	defer os.RemoveAll(tempdir)
 
+	// something something something auth-y bits
+	// https://godoc.org/gopkg.in/src-d/go-git.v4#CloneOptions
+
 	opts := &git.CloneOptions{
 		URL:      path,
+		Depth:    1,
 		Progress: os.Stdout,
 	}
 
