@@ -6,6 +6,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/src-d/go-git"
+	// "gopkg.in/src-d/go-git.v4"
 	"github.com/whosonfirst/go-whosonfirst-crawl"
 	"github.com/whosonfirst/go-whosonfirst-csv"
 	"github.com/whosonfirst/go-whosonfirst-log"
@@ -228,16 +230,28 @@ func (i *Indexer) IndexPath(path string, args ...interface{}) error {
 
 func (i *Indexer) IndexClone(path string, args ...interface{}) error {
 
-	/*
+	tempdir, err := ioutil.TempDir("", "clone")
 
-		- parse path in to URL, mode (https, git) and target
-		- fetch repo as target
-		- index directory (as in i.IndexDirectory or really IndexRepo which doesn't exist...
-		- remove target
+	if err != nil {
+		return err
+	}
 
-	*/
+	defer os.RemoveAll(tempdir)
+	
+	repo_name := filepath.Base(path)
+	
+	opts := &git.CloneOptions{
+		URL:      path,
+		Progress: os.Stdout,
+	}
+	
+	_, err := git.PlainClone(tempdir, false, opts)
 
-	return errors.New("PLEASE IMPLEMENT ME")
+	if err != nil {
+		return err
+	}
+
+	return i.IndexDirectory(tempdir, args...)
 }
 
 func (i *Indexer) IndexRepo(abs_path string, args ...interface{}) error {
