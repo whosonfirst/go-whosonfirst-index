@@ -82,6 +82,10 @@ Index a list of files.
 
 Index all the features in line-separated GeoJSON list.
 
+### git
+
+Index all the features in a Git repository. Valid paths (URIs) are anything that can be read by the `go-git` [CloneOptions.URL](https://godoc.org/gopkg.in/src-d/go-git.v4#CloneOptions) property.
+
 ### meta
 
 Index all the files listed in a Who's On First "meta" (CSV) file.
@@ -98,3 +102,6 @@ Index all the files in the `data` directory of a Who's On First repository.
 
 Index all the records in the `geojson` table of a Who's On First SQLite database.
 
+## Important
+
+This package is a bit of a kitchen sink and imposes size and dependency requirements (`go-git` and `go-sqlite3` respectively) that are not ideal. The plan is to move these in to separate packages and use user-declared `db.SQL` or `go-cloud` dependency injection to allow Git repos or SQLite databases to be indexed. That doesn't exit yet.
