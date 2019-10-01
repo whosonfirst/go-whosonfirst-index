@@ -3,6 +3,7 @@ package index
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/whosonfirst/go-whosonfirst-log"
 	"io"
 	"net/url"
@@ -127,6 +128,22 @@ func NewIndexer(dsn string, f IndexerFunc) (*Indexer, error) {
 	}
 
 	name := u.Scheme
+
+	// this is here for backwards compatibility
+	
+	if name == "" {
+		
+		dsn = fmt.Sprintf("%s://", dsn)
+		
+		u, err := url.Parse(dsn)
+
+		if err != nil {
+			return nil, err
+		}
+		
+		name = u.Scheme
+	}
+	
 	driver, ok := drivers[name]
 
 	if !ok {
@@ -152,7 +169,7 @@ func NewIndexer(dsn string, f IndexerFunc) (*Indexer, error) {
 	return &i, nil
 }
 
-func (i *Indexer) IndexPaths(ctx context.Context, paths ...string) error {
+func (i *Indexer) Index(ctx context.Context, paths ...string) error {
 
 	t1 := time.Now()
 
@@ -173,29 +190,30 @@ func (i *Indexer) IndexPaths(ctx context.Context, paths ...string) error {
 			// pass
 		}
 
-		err := i.IndexPath(ctx, path)
+		err := i.Driver.IndexURI(ctx, i.Func, path)
 
 		if err != nil {
 			return err
 		}
 	}
 
-	return nil
+	return nil	
 }
 
-func (i *Indexer) IndexPath(ctx context.Context, path string) error {
+func (i *Indexer) IndexPaths(paths []string, args ...interface{}) error {
 
-	t1 := time.Now()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	
+	return i.Index(ctx, paths...)
+}
 
-	defer func() {
-		t2 := time.Since(t1)
-		i.Logger.Status("time to index path '%s' %v", path, t2)
-	}()
+func (i *Indexer) IndexPath(path string, args ...interface{}) error {
 
-	i.increment()
-	defer i.decrement()
-
-	return i.Driver.IndexURI(ctx, i.Func, path)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	
+	return i.Index(ctx, path)
 }
 
 func (i *Indexer) IsIndexing() bool {
