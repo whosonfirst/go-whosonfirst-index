@@ -130,20 +130,20 @@ func NewIndexer(dsn string, f IndexerFunc) (*Indexer, error) {
 	name := u.Scheme
 
 	// this is here for backwards compatibility
-	
+
 	if name == "" {
-		
+
 		dsn = fmt.Sprintf("%s://", dsn)
-		
+
 		u, err := url.Parse(dsn)
 
 		if err != nil {
 			return nil, err
 		}
-		
+
 		name = u.Scheme
 	}
-	
+
 	driver, ok := drivers[name]
 
 	if !ok {
@@ -197,14 +197,14 @@ func (i *Indexer) Index(ctx context.Context, paths ...string) error {
 		}
 	}
 
-	return nil	
+	return nil
 }
 
 func (i *Indexer) IndexPaths(paths []string, args ...interface{}) error {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	
+
 	return i.Index(ctx, paths...)
 }
 
@@ -212,7 +212,7 @@ func (i *Indexer) IndexPath(path string, args ...interface{}) error {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	
+
 	return i.Index(ctx, path)
 }
 

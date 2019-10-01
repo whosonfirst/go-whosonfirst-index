@@ -16,7 +16,7 @@ func main() {
 
 	valid_schemes := strings.Join(index.Drivers(), ",")
 	dsn_desc := fmt.Sprintf("Valid DSN schemes are: %s", valid_schemes)
-	
+
 	var dsn = flag.String("dsn", "repo://", dsn_desc)
 	flag.Parse()
 
