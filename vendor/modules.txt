@@ -22,7 +22,7 @@ github.com/src-d/gcfg/token
 github.com/src-d/gcfg/types
 # github.com/whosonfirst/go-spatialite v0.0.0-20180220171945-cb1d9ed624a8
 github.com/whosonfirst/go-spatialite
-# github.com/whosonfirst/go-whosonfirst-crawl v0.1.0
+# github.com/whosonfirst/go-whosonfirst-crawl v0.2.0
 github.com/whosonfirst/go-whosonfirst-crawl
 # github.com/whosonfirst/go-whosonfirst-csv v0.1.0
 github.com/whosonfirst/go-whosonfirst-csv
@@ -40,7 +40,7 @@ github.com/whosonfirst/go-whosonfirst-sqlite/utils
 github.com/whosonfirst/go-whosonfirst-sqlite
 # github.com/whosonfirst/go-whosonfirst-uri v0.1.0
 github.com/whosonfirst/go-whosonfirst-uri
-# github.com/whosonfirst/walk v0.0.0-20160802000000-c0a349674b73681a7272f5ce6ade8ea28055059f
+# github.com/whosonfirst/walk v0.0.0-20160803014805-c0a349674b73
 github.com/whosonfirst/walk
 # github.com/xanzy/ssh-agent v0.2.1
 github.com/xanzy/ssh-agent
@@ -77,6 +77,7 @@ gopkg.in/src-d/go-billy.v4/helper/chroot
 gopkg.in/src-d/go-billy.v4/helper/polyfill
 # gopkg.in/src-d/go-git.v4 v4.13.1
 gopkg.in/src-d/go-git.v4
+gopkg.in/src-d/go-git.v4/plumbing/protocol/packp/sideband
 gopkg.in/src-d/go-git.v4/config
 gopkg.in/src-d/go-git.v4/internal/revision
 gopkg.in/src-d/go-git.v4/plumbing
@@ -88,7 +89,6 @@ gopkg.in/src-d/go-git.v4/plumbing/format/packfile
 gopkg.in/src-d/go-git.v4/plumbing/object
 gopkg.in/src-d/go-git.v4/plumbing/protocol/packp
 gopkg.in/src-d/go-git.v4/plumbing/protocol/packp/capability
-gopkg.in/src-d/go-git.v4/plumbing/protocol/packp/sideband
 gopkg.in/src-d/go-git.v4/plumbing/revlist
 gopkg.in/src-d/go-git.v4/plumbing/storer
 gopkg.in/src-d/go-git.v4/plumbing/transport
@@ -102,12 +102,12 @@ gopkg.in/src-d/go-git.v4/utils/merkletrie
 gopkg.in/src-d/go-git.v4/utils/merkletrie/filesystem
 gopkg.in/src-d/go-git.v4/utils/merkletrie/index
 gopkg.in/src-d/go-git.v4/utils/merkletrie/noder
+gopkg.in/src-d/go-git.v4/plumbing/format/pktline
 gopkg.in/src-d/go-git.v4/internal/url
 gopkg.in/src-d/go-git.v4/plumbing/format/config
 gopkg.in/src-d/go-git.v4/utils/binary
 gopkg.in/src-d/go-git.v4/plumbing/format/idxfile
 gopkg.in/src-d/go-git.v4/plumbing/format/diff
-gopkg.in/src-d/go-git.v4/plumbing/format/pktline
 gopkg.in/src-d/go-git.v4/plumbing/transport/file
 gopkg.in/src-d/go-git.v4/plumbing/transport/git
 gopkg.in/src-d/go-git.v4/plumbing/transport/http
