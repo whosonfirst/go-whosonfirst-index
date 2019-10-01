@@ -93,10 +93,14 @@ func Modes() []string {
 
 func ContextForPath(path string) (context.Context, error) {
 
-	key := IndexerContextKey("path")
-	ctx := context.WithValue(context.Background(), key, path)
-
+	ctx := AssignPathContext(context.Background(), path)
 	return ctx, nil
+}
+
+func AssignPathContext(ctx context.Context, path string) context.Context {
+
+	key := IndexerContextKey("path")
+	return context.WithValue(ctx, key, path)
 }
 
 func PathForContext(ctx context.Context) (string, error) {

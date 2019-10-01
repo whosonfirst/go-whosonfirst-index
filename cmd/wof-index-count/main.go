@@ -4,7 +4,7 @@ import (
 	"context"
 	"flag"
 	"github.com/whosonfirst/go-whosonfirst-index"
-	_ "github.com/whosonfirst/go-whosonfirst-index/driver"	
+	_ "github.com/whosonfirst/go-whosonfirst-index/driver"
 	"io"
 	"log"
 	"sync/atomic"

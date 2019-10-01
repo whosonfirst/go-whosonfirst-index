@@ -48,6 +48,9 @@ func (d *DirectoryDriver) IndexURI(ctx context.Context, index_cb index.IndexerFu
 			return err
 		}
 
+		defer fh.Close()
+
+		ctx = index.AssignPathContext(ctx, path)
 		return index_cb(ctx, fh)
 	}
 

@@ -28,6 +28,9 @@ func (d *FileDriver) IndexURI(ctx context.Context, index_cb index.IndexerFunc, u
 		return err
 	}
 
+	defer fh.Close()
+
+	ctx = index.AssignPathContext(ctx, uri)
 	return index_cb(ctx, fh)
 
 }
