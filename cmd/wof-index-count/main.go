@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"github.com/whosonfirst/go-whosonfirst-index"
+	_ "github.com/whosonfirst/go-whosonfirst-index/driver"	
 	"io"
 	"log"
 	"sync/atomic"
@@ -11,13 +12,13 @@ import (
 
 func main() {
 
-	var mode = flag.String("mode", "repo", "")
+	var mode = flag.String("mode", "repo://", "")
 	flag.Parse()
 
 	var count int64
 	count = 0
 
-	f := func(fh io.Reader, ctx context.Context, args ...interface{}) error {
+	f := func(ctx context.Context, fh io.Reader, args ...interface{}) error {
 
 		_, err := index.PathForContext(ctx)
 
@@ -35,13 +36,15 @@ func main() {
 		log.Fatal(err)
 	}
 
-	for _, path := range flag.Args() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-		err := i.IndexPath(path)
+	paths := flag.Args()
 
-		if err != nil {
-			log.Fatal(err)
-		}
+	err = i.IndexPaths(ctx, paths...)
+
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	log.Println(count, i.Indexed)
