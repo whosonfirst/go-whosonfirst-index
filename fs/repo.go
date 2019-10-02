@@ -7,14 +7,19 @@ import (
 )
 
 func init() {
+	dr := NewRepoDriver()
+	index.Register("repo", dr)
+}
 
-	dd := &DirectoryDriver{}
+func NewRepoDriver() index.Driver {
+
+	dd := NewDirectoryDriver()
 
 	dr := &RepoDriver{
 		driver: dd,
 	}
 
-	index.Register("repo", dr)
+	return dr
 }
 
 type RepoDriver struct {

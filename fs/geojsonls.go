@@ -9,8 +9,12 @@ import (
 )
 
 func init() {
-	dr := &GeojsonLDriver{}
+	dr := NewGeoJSONLDriver()
 	index.Register("geojsonl", dr)
+}
+
+func NewGeoJSONLDriver() index.Driver {
+	return &GeojsonLDriver{}
 }
 
 type GeojsonLDriver struct {

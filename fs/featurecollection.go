@@ -9,8 +9,12 @@ import (
 )
 
 func init() {
-	dr := &FeatureCollectionDriver{}
+	dr := NewFeatureCollectionDriver()
 	index.Register("featurecollection", dr)
+}
+
+func NewFeatureCollectionDriver() index.Driver {
+	return &FeatureCollectionDriver{}
 }
 
 type FeatureCollectionDriver struct {
