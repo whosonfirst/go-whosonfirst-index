@@ -1,16 +1,23 @@
 package fs
 
-/*
-
-this is just here so we can do the following:
-
 import (
 	"github.com/whosonfirst/go-whosonfirst-index"
-	_ "github.com/whosonfirst/go-whosonfirst-index/fs"
+	"io"
+	"os"
+	_ "path/filepath"
 )
 
-*/
+func readerFromPath(abs_path string) (io.ReadCloser, error) {
 
-import (
-	_ "github.com/whosonfirst/go-whosonfirst-index/driver"
-)
+	if abs_path == index.STDIN {
+		return os.Stdin, nil
+	}
+
+	fh, err := os.Open(abs_path)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return fh, nil
+}
