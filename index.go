@@ -190,7 +190,12 @@ func (i *Indexer) Index(ctx context.Context, paths ...string) error {
 			// pass
 		}
 
-		err := i.Driver.IndexURI(ctx, i.Func, path)
+		counter_func := func(ctx context.Context, fh io.Reader, args ...interface{}) error {
+			defer atomic.AddInt64(&i.Indexed, 1)
+			return i.Func(ctx, fh, args...)
+		}
+		
+		err := i.Driver.IndexURI(ctx, counter_func, path)
 
 		if err != nil {
 			return err
