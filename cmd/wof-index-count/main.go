@@ -10,6 +10,7 @@ import (
 	"log"
 	"strings"
 	"sync/atomic"
+	"time"
 )
 
 func main() {
@@ -46,11 +47,13 @@ func main() {
 
 	paths := flag.Args()
 
+	t1 := time.Now()
+
 	err = i.Index(ctx, paths...)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	log.Println(count, i.Indexed)
+	log.Printf("Counted %d records (%d) in %v\n", count, i.Indexed, time.Since(t1))
 }
