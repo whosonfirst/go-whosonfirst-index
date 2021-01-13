@@ -8,14 +8,14 @@ import (
 	"io/ioutil"
 )
 
-func NewIndexerWithQuerySet(ctx context.Context, indexer_uri string, indexer_cb IndexerFunc, qs *query.QuerySet) (*Indexer, error) {
+func NewCallbackWithQuerySet(ctx context.Context, indexer_cb IndexerFunc, qs *query.QuerySet) (IndexerFunc, error) {
 
 	if qs == nil {
-		return NewIndexer(indexer_uri, indexer_cb)
+		return indexer_cb, nil
 	}
 
 	if len(qs.Queries) == 0 {
-		return NewIndexer(indexer_uri, indexer_cb)
+		return indexer_cb, nil
 	}
 
 	query_cb := func(ctx context.Context, fh io.Reader, args ...interface{}) error {
@@ -38,6 +38,17 @@ func NewIndexerWithQuerySet(ctx context.Context, indexer_uri string, indexer_cb 
 
 		br := bytes.NewReader(body)
 		return indexer_cb(ctx, br, args...)
+	}
+
+	return query_cb, nil
+}
+
+func NewIndexerWithQuerySet(ctx context.Context, indexer_uri string, indexer_cb IndexerFunc, qs *query.QuerySet) (*Indexer, error) {
+
+	query_cb, err := NewCallbackWithQuerySet(ctx, indexer_cb, qs)
+
+	if err != nil {
+		return nil, err
 	}
 
 	return NewIndexer(indexer_uri, query_cb)
