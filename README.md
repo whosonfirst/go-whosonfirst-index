@@ -21,7 +21,7 @@ func main() {
 	
      	flag.Parse()
 	
-	cb := func(ctx context.Context, fh io.Reader, args ...interface{}) error {
+	cb := func(ctx context.Context, fh io.ReadSeekCloser, args ...interface{}) error {
 
 		path, _ := index.PathForContext(ctx)
 
