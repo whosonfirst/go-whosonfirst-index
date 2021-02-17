@@ -13,12 +13,5 @@ github.com/tidwall/pretty
 # github.com/whosonfirst/go-whosonfirst-crawl v0.2.1
 ## explicit
 github.com/whosonfirst/go-whosonfirst-crawl
-# github.com/whosonfirst/go-whosonfirst-index v0.3.4
-## explicit
-github.com/whosonfirst/go-whosonfirst-index
-# github.com/whosonfirst/go-whosonfirst-log v0.1.0
-github.com/whosonfirst/go-whosonfirst-log
-# github.com/whosonfirst/go-whosonfirst-uri v0.2.0
-## explicit
 # github.com/whosonfirst/walk v0.0.1
 github.com/whosonfirst/walk
