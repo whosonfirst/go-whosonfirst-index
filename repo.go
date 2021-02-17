@@ -6,31 +6,31 @@ import (
 )
 
 func init() {
-	dr := NewRepoDriver()
-	Register("repo", dr)
+	ctx := context.Background()
+	Register(ctx, "repo", NewRepoIndexer)
 }
 
-func NewRepoDriver() index.Driver {
+type RepoIndexer struct {
+	Indexer
+	indexer Indexer
+}
 
-	dd := NewDirectoryDriver()
+func NewRepoIndexer(ctx context.Context, uri string) (Indexer, error) {
 
-	dr := &RepoDriver{
-		driver: dd,
+	directory_idx, err := NewDirectoryIndexer(ctx, uri)
+
+	if err != nil {
+		return nil, err
+	}
+	
+	idx := &RepoIndexer{
+		indexer: directory_idx,
 	}
 
 	return dr
 }
 
-type RepoDriver struct {
-	index.Driver
-	driver index.Driver
-}
-
-func (d *RepoDriver) Open(uri string) error {
-	return d.driver.Open(uri)
-}
-
-func (d *RepoDriver) IndexURI(ctx context.Context, index_cb index.IndexerFunc, uri string) error {
+func (idx *RepoIndexer) IndexURI(ctx context.Context, index_cb IndexerCallbackFunc, uri string) error {
 
 	abs_path, err := filepath.Abs(uri)
 
@@ -40,5 +40,5 @@ func (d *RepoDriver) IndexURI(ctx context.Context, index_cb index.IndexerFunc, u
 
 	data_path := filepath.Join(abs_path, "data")
 
-	return d.driver.IndexURI(ctx, index_cb, data_path)
+	return idx.directory_indexer.IndexURI(ctx, index_cb, data_path)
 }

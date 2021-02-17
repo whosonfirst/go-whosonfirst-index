@@ -16,13 +16,13 @@ type DirectoryIndexer struct {
 	Indexer
 }
 
-func NewDirectoryIndexer(ctx context.Context, uri string) Indexer {
+func NewDirectoryIndexer(ctx context.Context, uri string) (Indexer, error) {
 
 	i := &DirectoryIndexer{}
 	return i, nil
 }
 
-func (i *DirectoryIndexer) IndexURI(ctx context.Context, index_cb index.IndexerFunc, uri string) error {
+func (i *DirectoryIndexer) IndexURI(ctx context.Context, index_cb IndexerCallbackFunc, uri string) error {
 
 	abs_path, err := filepath.Abs(uri)
 
@@ -43,7 +43,7 @@ func (i *DirectoryIndexer) IndexURI(ctx context.Context, index_cb index.IndexerF
 			return nil
 		}
 
-		fh, err := readerFromPath(path)
+		fh, err := ReaderWithPath(path)
 
 		if err != nil {
 			return err
@@ -51,7 +51,7 @@ func (i *DirectoryIndexer) IndexURI(ctx context.Context, index_cb index.IndexerF
 
 		defer fh.Close()
 
-		ctx = index.AssignPathContext(ctx, path)
+		ctx = AssignPathContext(ctx, path)
 		return index_cb(ctx, fh)
 	}
 
