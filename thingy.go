@@ -51,35 +51,62 @@ func (i *Thingy) Index(ctx context.Context, uris ...string) error {
 		i.Logger.Status("time to index paths (%d) %v", len(paths), t2)
 	}()
 
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-		
 	i.increment()
 	defer i.decrement()
 
 	counter_func := func(ctx context.Context, fh io.Reader, args ...interface{}) error {
-		
 		defer atomic.AddInt64(&i.Indexed, 1)
-
-		select {
-		case <- ctx.Done():
-			return nil
-		default:
-			// pass
-		}
-		
 		return i.Func(ctx, fh, args...)
 	}
 
-	for _, uri := range uris {
-	
-		err := i.Indexer.IndexURI(ctx, counter_func, uri)
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
-		if err != nil {
+	procs := 1
+	throttle := make(chan bool, procs)
+
+	done_ch := make(chan bool)
+	err_ch := make(chan error)
+
+	remaining := len(uris)
+
+	for _, uri := range uris {
+
+		go func(uri string) {
+
+			<-throttle
+
+			defer func() {
+				throttle <- true
+				done_ch <- true
+ 			}()
+
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				// pass
+			}
+
+			err := i.Indexer.IndexURI(ctx, counter_func, uri)
+
+			if err != nil {
+				err_ch <- err
+			}
+		}(uri)
+	}
+
+	for remaining > 0 {
+		select {
+		case <-done_ch:
+			remaining -= 1
+		case err := err_ch:
 			return err
+		default:
+			// pass
 		}
 	}
-	
+
 	return nil
 }
 

@@ -23,7 +23,7 @@ func NewDirectoryIndexer(ctx context.Context, uri string) Indexer {
 }
 
 func (i *DirectoryIndexer) IndexURI(ctx context.Context, index_cb index.IndexerFunc, uri string) error {
-		
+
 	abs_path, err := filepath.Abs(uri)
 
 	if err != nil {
