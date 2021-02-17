@@ -41,3 +41,34 @@ func main() {
 ```
 
 _Error handling removed for the sake of brevity._
+
+## Tools
+
+```
+$> make cli
+go build -mod vendor -o bin/count cmd/count/main.go
+go build -mod vendor -o bin/emit cmd/emit/main.go
+```
+
+### emit
+
+```
+$> ./bin/emit \
+	-indexer-uri 'repo://?include=properties.sfomuseum:placetype=museum' \
+	-geojson \	
+	/usr/local/data/sfomuseum-data-architecture/ \
+
+| jq '.features[]["properties"]["wof:id"]'
+
+1729813675
+1477855937
+1360521563
+1360521569
+1360521565
+1360521571
+1159157863
+```
+
+## Schemes
+
+_To be written_

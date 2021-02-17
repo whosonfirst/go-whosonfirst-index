@@ -18,13 +18,13 @@ const (
 type ThingyContextKey string
 
 type Thingy struct {
-	Indexer   Indexer
-	Func      IndexerCallbackFunc
-	Logger    *log.Logger
-	Filters   *Filters
-	Indexed   int64
-	count     int64
-	max_procs int
+	Indexer             Indexer
+	IndexerCallbackFunc IndexerCallbackFunc
+	Logger              *log.Logger
+	Filters             *Filters
+	Indexed             int64
+	count               int64
+	max_procs           int
 }
 
 func NewThingy(ctx context.Context, uri string, cb IndexerCallbackFunc) (*Thingy, error) {
@@ -59,12 +59,12 @@ func NewThingy(ctx context.Context, uri string, cb IndexerCallbackFunc) (*Thingy
 	logger := log.Default()
 
 	i := Thingy{
-		Indexer:   idx,
-		Func:      cb,
-		Logger:    logger,
-		Indexed:   0,
-		count:     0,
-		max_procs: max_procs,
+		Indexer:             idx,
+		IndexerCallbackFunc: cb,
+		Logger:              logger,
+		Indexed:             0,
+		count:               0,
+		max_procs:           max_procs,
 	}
 
 	return &i, nil
@@ -87,7 +87,7 @@ func (idx *Thingy) Index(ctx context.Context, uris ...string) error {
 		defer atomic.AddInt64(&idx.Indexed, 1)
 		defer fh.Close()
 
-		return idx.Func(ctx, fh, args...)
+		return idx.IndexerCallbackFunc(ctx, fh, args...)
 	}
 
 	ctx, cancel := context.WithCancel(ctx)
