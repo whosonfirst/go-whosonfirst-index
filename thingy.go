@@ -66,6 +66,10 @@ func (i *Thingy) Index(ctx context.Context, uris ...string) error {
 	procs := 1
 	throttle := make(chan bool, procs)
 
+	for i := 0; i < procs; i++ {
+		throttle <- true
+	}
+
 	done_ch := make(chan bool)
 	err_ch := make(chan error)
 
@@ -89,7 +93,7 @@ func (i *Thingy) Index(ctx context.Context, uris ...string) error {
 				// pass
 			}
 
-			err := i.Indexer.Index(ctx, counter_func, uri)
+			err := i.Indexer.IndexURI(ctx, counter_func, uri)
 
 			if err != nil {
 				err_ch <- err

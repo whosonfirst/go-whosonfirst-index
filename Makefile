@@ -1,2 +1,2 @@
-tools:
-	go build -mod vendor -o bin/wof-index-count cmd/wof-index-count/main.go
+cli:
+	go build -mod vendor -o bin/count cmd/count/main.go

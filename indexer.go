@@ -15,7 +15,7 @@ type IndexerInitializeFunc func(context.Context, string) (Indexer, error)
 type IndexerCallbackFunc func(context.Context, io.Reader, ...interface{}) error
 
 type Indexer interface {
-	Index(context.Context, IndexerCallbackFunc, string) error
+	IndexURI(context.Context, IndexerCallbackFunc, string) error
 }
 
 var indexers roster.Roster

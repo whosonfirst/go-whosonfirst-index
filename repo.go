@@ -39,6 +39,5 @@ func (idx *RepoIndexer) IndexURI(ctx context.Context, index_cb IndexerCallbackFu
 	}
 
 	data_path := filepath.Join(abs_path, "data")
-
-	return idx.indexer.Index(ctx, index_cb, data_path)
+	return idx.indexer.IndexURI(ctx, index_cb, data_path)
 }
