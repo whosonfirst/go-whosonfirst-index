@@ -17,10 +17,12 @@ import (
 
 func main() {
 
-	var uri = flag.String("indexer-uri", "repo://", "A valid go-whosonfirst-index URI")
+	indexer_uri := flag.String("indexer-uri", "repo://", "A valid go-whosonfirst-index URI")
 	
      	flag.Parse()
-	
+
+	ctx := context.Background()
+
 	cb := func(ctx context.Context, fh io.ReadSeekCloser, args ...interface{}) error {
 
 		path, _ := index.PathForContext(ctx)
@@ -29,14 +31,10 @@ func main() {
 		return nil
 	}
 
-	i, _ := index.NewIndexer(*uri, cb)
+	idx, _ := index.NewIndexer(ctx, *indexer_uri, cb)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	paths := flag.Args()
-
-	i.Index(ctx, paths...)
+	uris := flag.Args()
+	idx.Index(ctx, uris...)
 }	
 ```
 
@@ -72,3 +70,11 @@ $> ./bin/emit \
 ## Schemes
 
 _To be written_
+
+## Filters
+
+_To be written_
+
+## See also
+
+* https://github.com/aaronland/go-json-query

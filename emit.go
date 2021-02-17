@@ -47,6 +47,13 @@ func (e *Emitter) Emit(ctx context.Context, indexer_uri string, uris ...string) 
 
 	cb := func(ctx context.Context, fh io.ReadSeekCloser, args ...interface{}) error {
 
+		select {
+		case <-ctx.Done():
+			return nil
+		default:
+			// pass
+		}
+
 		mu.Lock()
 		defer mu.Unlock()
 
