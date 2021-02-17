@@ -10,28 +10,27 @@ package main
 import (
        "context"
        "flag"
-       "github.com/whosonfirst/go-whosonfirst-index/v2"
+       "github.com/whosonfirst/go-whosonfirst-index/v2/emitter"       
+       "github.com/whosonfirst/go-whosonfirst-index/v2/indexer"
        "io"
        "log"
 )
 
 func main() {
 
-	indexer_uri := flag.String("indexer-uri", "repo://", "A valid go-whosonfirst-index URI")
+	emitter_uri := flag.String("emitter-uri", "repo://", "A valid whosonfirst/go-whosonfirst-index/v2/emitter URI")
 	
      	flag.Parse()
 
 	ctx := context.Background()
 
 	cb := func(ctx context.Context, fh io.ReadSeekCloser, args ...interface{}) error {
-
 		path, _ := index.PathForContext(ctx)
-
 		log.Println("PATH", path)
 		return nil
 	}
 
-	idx, _ := index.NewIndexer(ctx, *indexer_uri, cb)
+	idx, _ := indexer.NewIndexer(ctx, *emitter_uri, cb)
 
 	uris := flag.Args()
 	idx.Index(ctx, uris...)
@@ -39,6 +38,27 @@ func main() {
 ```
 
 _Error handling removed for the sake of brevity._
+
+## Concepts
+
+### Indexer
+
+### Emitters
+
+_To be written_
+
+## Interfaces
+
+_To be written_
+
+## URIs and Schemes 
+
+_To be written_
+
+## Filters
+
+_To be written_
+
 
 ## Tools
 
@@ -52,7 +72,7 @@ go build -mod vendor -o bin/emit cmd/emit/main.go
 
 ```
 $> ./bin/emit \
-	-indexer-uri 'repo://?include=properties.sfomuseum:placetype=museum' \
+	-emitter-uri 'repo://?include=properties.sfomuseum:placetype=museum' \
 	-geojson \	
 	/usr/local/data/sfomuseum-data-architecture/ \
 
@@ -66,14 +86,6 @@ $> ./bin/emit \
 1360521571
 1159157863
 ```
-
-## Schemes
-
-_To be written_
-
-## Filters
-
-_To be written_
 
 ## See also
 

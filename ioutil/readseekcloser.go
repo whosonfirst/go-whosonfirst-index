@@ -1,10 +1,12 @@
 package ioutil
 
+// This is only here until there is an equivalent package/construct in the core Go language
+// (20210217/thisisaaronland)
+
 import (
 	"bytes"
 	"fmt"
 	"io"
-	"log"
 	"sync"
 )
 
@@ -22,8 +24,6 @@ type ReadSeekCloser struct {
 
 func (rsc *ReadSeekCloser) Read(p []byte) (n int, err error) {
 
-	log.Println("READ")
-
 	if rsc.seeker {
 		return rsc.fh.(io.Reader).Read(p)
 	}
@@ -39,8 +39,6 @@ func (rsc *ReadSeekCloser) Read(p []byte) (n int, err error) {
 
 func (rsc *ReadSeekCloser) Close() error {
 
-	log.Println("CLOSE")
-
 	if rsc.closer {
 		return rsc.fh.(io.ReadCloser).Close()
 	}
@@ -49,8 +47,6 @@ func (rsc *ReadSeekCloser) Close() error {
 }
 
 func (rsc *ReadSeekCloser) Seek(offset int64, whence int) (int64, error) {
-
-	log.Println("SEEK")
 
 	if rsc.seeker {
 		return rsc.fh.(io.Seeker).Seek(offset, whence)
@@ -67,16 +63,12 @@ func (rsc *ReadSeekCloser) Seek(offset int64, whence int) (int64, error) {
 
 func (rsc *ReadSeekCloser) bytesReader() (*bytes.Reader, error) {
 
-	log.Println("INFLATE")
-
 	rsc.mu.Lock()
 	defer rsc.mu.Unlock()
 
 	if rsc.br != nil {
 		return rsc.br, nil
 	}
-
-	log.Println("CREATE")
 
 	body, err := io.ReadAll(rsc.fh.(io.Reader))
 

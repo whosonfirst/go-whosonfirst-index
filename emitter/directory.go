@@ -1,38 +1,39 @@
-package index
+package emitter
 
 import (
 	"context"
 	"github.com/whosonfirst/go-whosonfirst-crawl"
+	"github.com/whosonfirst/go-whosonfirst-index/v2/filters"
 	"os"
 	"path/filepath"
 )
 
 func init() {
 	ctx := context.Background()
-	RegisterIndexer(ctx, "directory", NewDirectoryIndexer)
+	RegisterEmitter(ctx, "directory", NewDirectoryEmitter)
 }
 
-type DirectoryIndexer struct {
-	Indexer
-	filters *Filters
+type DirectoryEmitter struct {
+	Emitter
+	filters filters.Filters
 }
 
-func NewDirectoryIndexer(ctx context.Context, uri string) (Indexer, error) {
+func NewDirectoryEmitter(ctx context.Context, uri string) (Emitter, error) {
 
-	f, err := NewFiltersFromURI(ctx, uri)
+	f, err := filters.NewQueryFiltersFromURI(ctx, uri)
 
 	if err != nil {
 		return nil, err
 	}
 
-	idx := &DirectoryIndexer{
+	idx := &DirectoryEmitter{
 		filters: f,
 	}
 
 	return idx, nil
 }
 
-func (idx *DirectoryIndexer) IndexURI(ctx context.Context, index_cb IndexerCallbackFunc, uri string) error {
+func (idx *DirectoryEmitter) IndexURI(ctx context.Context, index_cb EmitterCallbackFunc, uri string) error {
 
 	abs_path, err := filepath.Abs(uri)
 

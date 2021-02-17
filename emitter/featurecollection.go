@@ -1,40 +1,41 @@
-package index
+package emitter
 
 import (
 	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/whosonfirst/go-whosonfirst-index/v2/filters"
 	"github.com/whosonfirst/go-whosonfirst-index/v2/ioutil"
 	"io"
 )
 
 func init() {
 	ctx := context.Background()
-	RegisterIndexer(ctx, "featurecollection", NewFeatureCollectionIndexer)
+	RegisterEmitter(ctx, "featurecollection", NewFeatureCollectionEmitter)
 }
 
-type FeatureCollectionIndexer struct {
-	Indexer
-	filters *Filters
+type FeatureCollectionEmitter struct {
+	Emitter
+	filters filters.Filters
 }
 
-func NewFeatureCollectionIndexer(ctx context.Context, uri string) (Indexer, error) {
+func NewFeatureCollectionEmitter(ctx context.Context, uri string) (Emitter, error) {
 
-	f, err := NewFiltersFromURI(ctx, uri)
+	f, err := filters.NewQueryFiltersFromURI(ctx, uri)
 
 	if err != nil {
 		return nil, err
 	}
 
-	i := &FeatureCollectionIndexer{
+	i := &FeatureCollectionEmitter{
 		filters: f,
 	}
 
 	return i, nil
 }
 
-func (idx *FeatureCollectionIndexer) IndexURI(ctx context.Context, index_cb IndexerCallbackFunc, uri string) error {
+func (idx *FeatureCollectionEmitter) IndexURI(ctx context.Context, index_cb EmitterCallbackFunc, uri string) error {
 
 	fh, err := ReaderWithPath(ctx, uri)
 

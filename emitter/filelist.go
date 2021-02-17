@@ -1,36 +1,37 @@
-package index
+package emitter
 
 import (
 	"bufio"
 	"context"
+	"github.com/whosonfirst/go-whosonfirst-index/v2/filters"
 )
 
 func init() {
 	ctx := context.Background()
-	RegisterIndexer(ctx, "filelist", NewFileListIndexer)
+	RegisterEmitter(ctx, "filelist", NewFileListEmitter)
 }
 
-type FileListIndexer struct {
-	Indexer
-	filters *Filters
+type FileListEmitter struct {
+	Emitter
+	filters filters.Filters
 }
 
-func NewFileListIndexer(ctx context.Context, uri string) (Indexer, error) {
+func NewFileListEmitter(ctx context.Context, uri string) (Emitter, error) {
 
-	f, err := NewFiltersFromURI(ctx, uri)
+	f, err := filters.NewQueryFiltersFromURI(ctx, uri)
 
 	if err != nil {
 		return nil, err
 	}
 
-	idx := &FileListIndexer{
+	idx := &FileListEmitter{
 		filters: f,
 	}
 
 	return idx, nil
 }
 
-func (idx *FileListIndexer) IndexURI(ctx context.Context, index_cb IndexerCallbackFunc, uri string) error {
+func (idx *FileListEmitter) IndexURI(ctx context.Context, index_cb EmitterCallbackFunc, uri string) error {
 
 	fh, err := ReaderWithPath(ctx, uri)
 

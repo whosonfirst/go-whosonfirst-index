@@ -1,40 +1,41 @@
-package index
+package emitter
 
 import (
 	"bufio"
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/whosonfirst/go-whosonfirst-index/v2/filters"
 	"github.com/whosonfirst/go-whosonfirst-index/v2/ioutil"
 	"io"
 )
 
 func init() {
 	ctx := context.Background()
-	RegisterIndexer(ctx, "geojsonl", NewGeoJSONLIndexer)
+	RegisterEmitter(ctx, "geojsonl", NewGeoJSONLEmitter)
 }
 
-type GeojsonLIndexer struct {
-	Indexer
-	filters *Filters
+type GeojsonLEmitter struct {
+	Emitter
+	filters filters.Filters
 }
 
-func NewGeoJSONLIndexer(ctx context.Context, uri string) (Indexer, error) {
+func NewGeoJSONLEmitter(ctx context.Context, uri string) (Emitter, error) {
 
-	f, err := NewFiltersFromURI(ctx, uri)
+	f, err := filters.NewQueryFiltersFromURI(ctx, uri)
 
 	if err != nil {
 		return nil, err
 	}
 
-	idx := &GeojsonLIndexer{
+	idx := &GeojsonLEmitter{
 		filters: f,
 	}
 
 	return idx, nil
 }
 
-func (idx *GeojsonLIndexer) IndexURI(ctx context.Context, index_cb IndexerCallbackFunc, uri string) error {
+func (idx *GeojsonLEmitter) IndexURI(ctx context.Context, index_cb EmitterCallbackFunc, uri string) error {
 
 	fh, err := ReaderWithPath(ctx, uri)
 

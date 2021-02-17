@@ -4,7 +4,8 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/whosonfirst/go-whosonfirst-index/v2"
+	"github.com/whosonfirst/go-whosonfirst-index/v2/emitter"
+	"github.com/whosonfirst/go-whosonfirst-index/v2/indexer"
 	"io"
 	"log"
 	"strings"
@@ -14,7 +15,7 @@ import (
 
 func main() {
 
-	valid_schemes := strings.Join(index.Schemes(), ",")
+	valid_schemes := strings.Join(emitter.Schemes(), ",")
 	dsn_desc := fmt.Sprintf("Valid DSN schemes are: %s", valid_schemes)
 
 	var indexer_uri = flag.String("indexer-uri", "repo://", dsn_desc)
@@ -27,7 +28,7 @@ func main() {
 
 	cb := func(ctx context.Context, fh io.ReadSeekCloser, args ...interface{}) error {
 
-		_, err := index.PathForContext(ctx)
+		_, err := emitter.PathForContext(ctx)
 
 		if err != nil {
 			return err
@@ -37,7 +38,7 @@ func main() {
 		return nil
 	}
 
-	i, err := index.NewThingy(ctx, *indexer_uri, cb)
+	i, err := indexer.NewIndexer(ctx, *indexer_uri, cb)
 
 	if err != nil {
 		log.Fatal(err)

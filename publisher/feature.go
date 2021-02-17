@@ -1,19 +1,21 @@
-package index
+package publisher
 
 import (
 	"context"
+	"github.com/whosonfirst/go-whosonfirst-index/v2/indexer"
 	"io"
 	"sync"
 	"sync/atomic"
 )
 
-type Emitter struct {
+type FeaturePublisher struct {
+	Publisher
 	AsJSON    bool
 	AsGeoJSON bool
 	Writer    io.Writer
 }
 
-func (e *Emitter) Emit(ctx context.Context, indexer_uri string, uris ...string) (int64, error) {
+func (pub *FeaturePublisher) Publish(ctx context.Context, emitter_uri string, uris ...string) (int64, error) {
 
 	mu := new(sync.RWMutex)
 
@@ -23,9 +25,9 @@ func (e *Emitter) Emit(ctx context.Context, indexer_uri string, uris ...string) 
 	count = 0
 	count_bytes = 0
 
-	if e.AsGeoJSON {
+	if pub.AsGeoJSON {
 
-		b, err := e.Writer.Write([]byte(`{"type":"FeatureCollection", "features":`))
+		b, err := pub.Writer.Write([]byte(`{"type":"FeatureCollection", "features":`))
 
 		if err != nil {
 			return atomic.LoadInt64(&count_bytes), err
@@ -34,9 +36,9 @@ func (e *Emitter) Emit(ctx context.Context, indexer_uri string, uris ...string) 
 		atomic.AddInt64(&count_bytes, int64(b))
 	}
 
-	if e.AsGeoJSON || e.AsJSON {
+	if pub.AsGeoJSON || pub.AsJSON {
 
-		b, err := e.Writer.Write([]byte(`[`))
+		b, err := pub.Writer.Write([]byte(`[`))
 
 		if err != nil {
 			return atomic.LoadInt64(&count_bytes), err
@@ -59,10 +61,10 @@ func (e *Emitter) Emit(ctx context.Context, indexer_uri string, uris ...string) 
 
 		atomic.AddInt64(&count, 1)
 
-		if e.AsGeoJSON || e.AsJSON {
+		if pub.AsGeoJSON || pub.AsJSON {
 			if atomic.LoadInt64(&count) > 1 {
 
-				b, err := e.Writer.Write([]byte(`,`))
+				b, err := pub.Writer.Write([]byte(`,`))
 
 				if err != nil {
 					return err
@@ -72,7 +74,7 @@ func (e *Emitter) Emit(ctx context.Context, indexer_uri string, uris ...string) 
 			}
 		}
 
-		b, err := io.Copy(e.Writer, fh)
+		b, err := io.Copy(pub.Writer, fh)
 
 		if err != nil {
 			return err
@@ -82,7 +84,7 @@ func (e *Emitter) Emit(ctx context.Context, indexer_uri string, uris ...string) 
 		return nil
 	}
 
-	idx, err := NewThingy(ctx, indexer_uri, cb)
+	idx, err := indexer.NewIndexer(ctx, emitter_uri, cb)
 
 	if err != nil {
 		return atomic.LoadInt64(&count_bytes), err
@@ -94,9 +96,9 @@ func (e *Emitter) Emit(ctx context.Context, indexer_uri string, uris ...string) 
 		return atomic.LoadInt64(&count_bytes), err
 	}
 
-	if e.AsGeoJSON || e.AsJSON {
+	if pub.AsGeoJSON || pub.AsJSON {
 
-		b, err := e.Writer.Write([]byte(`]`))
+		b, err := pub.Writer.Write([]byte(`]`))
 
 		if err != nil {
 			return atomic.LoadInt64(&count_bytes), err
@@ -105,9 +107,9 @@ func (e *Emitter) Emit(ctx context.Context, indexer_uri string, uris ...string) 
 		atomic.AddInt64(&count_bytes, int64(b))
 	}
 
-	if e.AsGeoJSON {
+	if pub.AsGeoJSON {
 
-		b, err := e.Writer.Write([]byte(`}`))
+		b, err := pub.Writer.Write([]byte(`}`))
 
 		if err != nil {
 			return atomic.LoadInt64(&count_bytes), err

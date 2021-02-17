@@ -1,7 +1,8 @@
-package index
+package indexer
 
 import (
 	"context"
+	"github.com/whosonfirst/go-whosonfirst-index/v2/emitter"
 	"io"
 	"log"
 	"net/url"
@@ -11,25 +12,18 @@ import (
 	"time"
 )
 
-const (
-	STDIN = "STDIN"
-)
-
-type ThingyContextKey string
-
-type Thingy struct {
-	Indexer             Indexer
-	IndexerCallbackFunc IndexerCallbackFunc
+type Indexer struct {
+	Emitter             emitter.Emitter
+	EmitterCallbackFunc emitter.EmitterCallbackFunc
 	Logger              *log.Logger
-	Filters             *Filters
 	Indexed             int64
 	count               int64
 	max_procs           int
 }
 
-func NewThingy(ctx context.Context, uri string, cb IndexerCallbackFunc) (*Thingy, error) {
+func NewIndexer(ctx context.Context, uri string, cb emitter.EmitterCallbackFunc) (*Indexer, error) {
 
-	idx, err := NewIndexer(ctx, uri)
+	idx, err := emitter.NewEmitter(ctx, uri)
 
 	if err != nil {
 		return nil, err
@@ -58,9 +52,9 @@ func NewThingy(ctx context.Context, uri string, cb IndexerCallbackFunc) (*Thingy
 
 	logger := log.Default()
 
-	i := Thingy{
-		Indexer:             idx,
-		IndexerCallbackFunc: cb,
+	i := Indexer{
+		Emitter:             idx,
+		EmitterCallbackFunc: cb,
 		Logger:              logger,
 		Indexed:             0,
 		count:               0,
@@ -70,7 +64,7 @@ func NewThingy(ctx context.Context, uri string, cb IndexerCallbackFunc) (*Thingy
 	return &i, nil
 }
 
-func (idx *Thingy) Index(ctx context.Context, uris ...string) error {
+func (idx *Indexer) Index(ctx context.Context, uris ...string) error {
 
 	t1 := time.Now()
 
@@ -87,7 +81,7 @@ func (idx *Thingy) Index(ctx context.Context, uris ...string) error {
 		defer atomic.AddInt64(&idx.Indexed, 1)
 		defer fh.Close()
 
-		return idx.IndexerCallbackFunc(ctx, fh, args...)
+		return idx.EmitterCallbackFunc(ctx, fh, args...)
 	}
 
 	ctx, cancel := context.WithCancel(ctx)
@@ -123,7 +117,7 @@ func (idx *Thingy) Index(ctx context.Context, uris ...string) error {
 				// pass
 			}
 
-			err := idx.Indexer.IndexURI(ctx, counter_func, uri)
+			err := idx.Emitter.IndexURI(ctx, counter_func, uri)
 
 			if err != nil {
 				err_ch <- err
@@ -145,7 +139,7 @@ func (idx *Thingy) Index(ctx context.Context, uris ...string) error {
 	return nil
 }
 
-func (idx *Thingy) IsIndexing() bool {
+func (idx *Indexer) IsIndexing() bool {
 
 	if atomic.LoadInt64(&idx.count) > 0 {
 		return true
@@ -154,10 +148,10 @@ func (idx *Thingy) IsIndexing() bool {
 	return false
 }
 
-func (idx *Thingy) increment() {
+func (idx *Indexer) increment() {
 	atomic.AddInt64(&idx.count, 1)
 }
 
-func (idx *Thingy) decrement() {
+func (idx *Indexer) decrement() {
 	atomic.AddInt64(&idx.count, -1)
 }

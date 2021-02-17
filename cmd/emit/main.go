@@ -4,7 +4,8 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/whosonfirst/go-whosonfirst-index/v2"
+	"github.com/whosonfirst/go-whosonfirst-index/v2/emitter"
+	"github.com/whosonfirst/go-whosonfirst-index/v2/publisher"
 	"io"
 	"log"
 	"os"
@@ -13,7 +14,7 @@ import (
 
 func main() {
 
-	valid_schemes := strings.Join(index.Schemes(), ",")
+	valid_schemes := strings.Join(emitter.Schemes(), ",")
 	dsn_desc := fmt.Sprintf("Valid URI schemes are: %s", valid_schemes)
 
 	indexer_uri := flag.String("indexer-uri", "repo://", dsn_desc)
@@ -44,7 +45,7 @@ func main() {
 
 	wr := io.MultiWriter(writers...)
 
-	e := &index.Emitter{
+	pub := &publisher.FeaturePublisher{
 		AsJSON:    *as_json,
 		AsGeoJSON: *as_geojson,
 		Writer:    wr,
@@ -52,7 +53,7 @@ func main() {
 
 	uris := flag.Args()
 
-	_, err := e.Emit(ctx, *indexer_uri, uris...)
+	_, err := pub.Publish(ctx, *indexer_uri, uris...)
 
 	if err != nil {
 		log.Fatalf("Failed to emit features, %v", err)

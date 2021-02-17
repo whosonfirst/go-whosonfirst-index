@@ -1,4 +1,4 @@
-package index
+package filters
 
 import (
 	"context"
@@ -7,12 +7,13 @@ import (
 	"net/url"
 )
 
-type Filters struct {
+type QueryFilters struct {
+	Filters
 	Include *query.QuerySet
 	Exclude *query.QuerySet
 }
 
-func NewFiltersFromURI(ctx context.Context, uri string) (*Filters, error) {
+func NewQueryFiltersFromURI(ctx context.Context, uri string) (Filters, error) {
 
 	u, err := url.Parse(uri)
 
@@ -21,12 +22,12 @@ func NewFiltersFromURI(ctx context.Context, uri string) (*Filters, error) {
 	}
 
 	q := u.Query()
-	return NewFiltersFromQuery(ctx, q)
+	return NewQueryFiltersFromQuery(ctx, q)
 }
 
-func NewFiltersFromQuery(ctx context.Context, q url.Values) (*Filters, error) {
+func NewQueryFiltersFromQuery(ctx context.Context, q url.Values) (Filters, error) {
 
-	f := &Filters{}
+	f := &QueryFilters{}
 
 	includes := q["include"]
 	excludes := q["exclude"]
@@ -87,7 +88,7 @@ func querySetFromStrings(ctx context.Context, mode string, flags ...string) (*qu
 	return qs, nil
 }
 
-func (f *Filters) Apply(ctx context.Context, fh io.ReadSeekCloser) (bool, error) {
+func (f *QueryFilters) Apply(ctx context.Context, fh io.ReadSeekCloser) (bool, error) {
 
 	body, err := io.ReadAll(fh)
 
