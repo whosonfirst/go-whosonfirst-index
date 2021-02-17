@@ -2,6 +2,18 @@
 
 Go package for indexing Who's On First documents
 
+## Important
+
+This is a "version 2" release and is backwards incompatible with previous versions of this package. If you need to use the older version specify it as follows in your `go.mod` file:
+
+```
+require (
+	github.com/aaronland/go-whosonfirst-index v0.3.4
+)
+```
+
+Documentation for this package is incomplete and will be updated shortly.
+
 ## Example
 
 ```
