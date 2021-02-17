@@ -12,7 +12,7 @@ import (
 
 type IndexerInitializeFunc func(context.Context, string) (Indexer, error)
 
-type IndexerCallbackFunc func(context.Context, io.Reader, ...interface{}) error
+type IndexerCallbackFunc func(context.Context, io.ReadSeekCloser, ...interface{}) error
 
 type Indexer interface {
 	IndexURI(context.Context, IndexerCallbackFunc, string) error

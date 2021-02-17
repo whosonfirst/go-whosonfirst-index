@@ -5,7 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"github.com/whosonfirst/go-whosonfirst-index/v2/ioutil"
+	"io"
 )
 
 func init() {
@@ -32,7 +33,7 @@ func (i *FeatureCollectionIndexer) IndexURI(ctx context.Context, index_cb Indexe
 
 	defer fh.Close()
 
-	body, err := ioutil.ReadAll(fh)
+	body, err := io.ReadAll(fh)
 
 	if err != nil {
 		return err
@@ -66,7 +67,12 @@ func (i *FeatureCollectionIndexer) IndexURI(ctx context.Context, index_cb Indexe
 			return err
 		}
 
-		fh := bytes.NewBuffer(feature)
+		br := bytes.NewReader(feature)
+		fh, err := ioutil.NewReadSeekCloser(br)
+
+		if err != nil {
+			return err
+		}
 
 		path := fmt.Sprintf("%s#%d", uri, i)
 		ctx = AssignPathContext(ctx, path)

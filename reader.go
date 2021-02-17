@@ -8,7 +8,7 @@ import (
 	_ "path/filepath"
 )
 
-func ReaderWithPath(ctx context.Context, abs_path string) (io.ReadCloser, error) {
+func ReaderWithPath(ctx context.Context, abs_path string) (io.ReadSeekCloser, error) {
 
 	if abs_path == index.STDIN {
 		return os.Stdin, nil

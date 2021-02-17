@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/whosonfirst/go-whosonfirst-index/v2/ioutil"
 	"io"
 )
 
@@ -70,7 +71,12 @@ func (idx *GeojsonLIndexer) IndexURI(ctx context.Context, index_cb IndexerCallba
 			continue
 		}
 
-		fh := bytes.NewReader(raw.Bytes())
+		br := bytes.NewReader(raw.Bytes())
+		fh, err := ioutil.NewReadSeekCloser(br)
+
+		if err != nil {
+			return err
+		}
 
 		ctx = AssignPathContext(ctx, path)
 		err = index_cb(ctx, fh)

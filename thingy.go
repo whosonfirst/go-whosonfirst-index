@@ -4,6 +4,9 @@ import (
 	"context"
 	"io"
 	"log"
+	"net/url"
+	"runtime"
+	"strconv"
 	"sync/atomic"
 	"time"
 )
@@ -15,11 +18,12 @@ const (
 type ThingyContextKey string
 
 type Thingy struct {
-	Indexer Indexer
-	Func    IndexerCallbackFunc
-	Logger  *log.Logger
-	Indexed int64
-	count   int64
+	Indexer   Indexer
+	Func      IndexerCallbackFunc
+	Logger    *log.Logger
+	Indexed   int64
+	count     int64
+	max_procs int
 }
 
 func NewThingy(ctx context.Context, uri string, cb IndexerCallbackFunc) (*Thingy, error) {
@@ -30,40 +34,65 @@ func NewThingy(ctx context.Context, uri string, cb IndexerCallbackFunc) (*Thingy
 		return nil, err
 	}
 
+	u, err := url.Parse(uri)
+
+	if err != nil {
+		return nil, err
+	}
+
+	q := u.Query()
+
+	max_procs := runtime.NumCPU()
+
+	if q.Get("_max_procs") != "" {
+
+		max, err := strconv.ParseInt(q.Get("_max_procs"), 10, 64)
+
+		if err != nil {
+			return nil, err
+		}
+
+		max_procs = int(max)
+	}
+
 	logger := log.Default()
 
 	i := Thingy{
-		Indexer: idx,
-		Func:    cb,
-		Logger:  logger,
-		Indexed: 0,
-		count:   0,
+		Indexer:   idx,
+		Func:      cb,
+		Logger:    logger,
+		Indexed:   0,
+		count:     0,
+		max_procs: max_procs,
 	}
 
 	return &i, nil
 }
 
-func (i *Thingy) Index(ctx context.Context, uris ...string) error {
+func (idx *Thingy) Index(ctx context.Context, uris ...string) error {
 
 	t1 := time.Now()
 
 	defer func() {
 		t2 := time.Since(t1)
-		i.Logger.Printf("time to index paths (%d) %v", len(uris), t2)
+		idx.Logger.Printf("time to index paths (%d) %v", len(uris), t2)
 	}()
 
-	i.increment()
-	defer i.decrement()
+	idx.increment()
+	defer idx.decrement()
 
-	counter_func := func(ctx context.Context, fh io.Reader, args ...interface{}) error {
-		defer atomic.AddInt64(&i.Indexed, 1)
-		return i.Func(ctx, fh, args...)
+	counter_func := func(ctx context.Context, fh io.ReadSeekCloser, args ...interface{}) error {
+
+		defer atomic.AddInt64(&idx.Indexed, 1)
+		defer fh.Close()
+
+		return idx.Func(ctx, fh, args...)
 	}
 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	procs := 1
+	procs := idx.max_procs
 	throttle := make(chan bool, procs)
 
 	for i := 0; i < procs; i++ {
@@ -93,7 +122,7 @@ func (i *Thingy) Index(ctx context.Context, uris ...string) error {
 				// pass
 			}
 
-			err := i.Indexer.IndexURI(ctx, counter_func, uri)
+			err := idx.Indexer.IndexURI(ctx, counter_func, uri)
 
 			if err != nil {
 				err_ch <- err
@@ -115,19 +144,19 @@ func (i *Thingy) Index(ctx context.Context, uris ...string) error {
 	return nil
 }
 
-func (i *Thingy) IsIndexing() bool {
+func (idx *Thingy) IsIndexing() bool {
 
-	if atomic.LoadInt64(&i.count) > 0 {
+	if atomic.LoadInt64(&idx.count) > 0 {
 		return true
 	}
 
 	return false
 }
 
-func (i *Thingy) increment() {
-	atomic.AddInt64(&i.count, 1)
+func (idx *Thingy) increment() {
+	atomic.AddInt64(&idx.count, 1)
 }
 
-func (i *Thingy) decrement() {
-	atomic.AddInt64(&i.count, -1)
+func (idx *Thingy) decrement() {
+	atomic.AddInt64(&idx.count, -1)
 }
