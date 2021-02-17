@@ -76,6 +76,8 @@ func (rsc *ReadSeekCloser) bytesReader() (*bytes.Reader, error) {
 		return rsc.br, nil
 	}
 
+	log.Println("CREATE")
+
 	body, err := io.ReadAll(rsc.fh.(io.Reader))
 
 	if err != nil {

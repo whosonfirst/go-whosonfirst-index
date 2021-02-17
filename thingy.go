@@ -21,6 +21,7 @@ type Thingy struct {
 	Indexer   Indexer
 	Func      IndexerCallbackFunc
 	Logger    *log.Logger
+	Filters   *Filters
 	Indexed   int64
 	count     int64
 	max_procs int

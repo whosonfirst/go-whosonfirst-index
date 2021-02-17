@@ -16,14 +16,25 @@ func init() {
 
 type FeatureCollectionIndexer struct {
 	Indexer
+	filters *Filters
 }
 
 func NewFeatureCollectionIndexer(ctx context.Context, uri string) (Indexer, error) {
-	i := &FeatureCollectionIndexer{}
+
+	f, err := NewFiltersFromURI(ctx, uri)
+
+	if err != nil {
+		return nil, err
+	}
+
+	i := &FeatureCollectionIndexer{
+		filters: f,
+	}
+
 	return i, nil
 }
 
-func (i *FeatureCollectionIndexer) IndexURI(ctx context.Context, index_cb IndexerCallbackFunc, uri string) error {
+func (idx *FeatureCollectionIndexer) IndexURI(ctx context.Context, index_cb IndexerCallbackFunc, uri string) error {
 
 	fh, err := ReaderWithPath(ctx, uri)
 
@@ -72,6 +83,25 @@ func (i *FeatureCollectionIndexer) IndexURI(ctx context.Context, index_cb Indexe
 
 		if err != nil {
 			return err
+		}
+
+		if idx.filters != nil {
+
+			ok, err := idx.filters.Apply(ctx, fh)
+
+			if err != nil {
+				return err
+			}
+
+			if !ok {
+				return nil
+			}
+
+			_, err = fh.Seek(0, 0)
+
+			if err != nil {
+				return err
+			}
 		}
 
 		path := fmt.Sprintf("%s#%d", uri, i)

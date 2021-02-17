@@ -14,14 +14,25 @@ func init() {
 
 type DirectoryIndexer struct {
 	Indexer
+	filters *Filters
 }
 
 func NewDirectoryIndexer(ctx context.Context, uri string) (Indexer, error) {
-	i := &DirectoryIndexer{}
-	return i, nil
+
+	f, err := NewFiltersFromURI(ctx, uri)
+
+	if err != nil {
+		return nil, err
+	}
+
+	idx := &DirectoryIndexer{
+		filters: f,
+	}
+
+	return idx, nil
 }
 
-func (i *DirectoryIndexer) IndexURI(ctx context.Context, index_cb IndexerCallbackFunc, uri string) error {
+func (idx *DirectoryIndexer) IndexURI(ctx context.Context, index_cb IndexerCallbackFunc, uri string) error {
 
 	abs_path, err := filepath.Abs(uri)
 
@@ -49,6 +60,25 @@ func (i *DirectoryIndexer) IndexURI(ctx context.Context, index_cb IndexerCallbac
 		}
 
 		defer fh.Close()
+
+		if idx.filters != nil {
+
+			ok, err := idx.filters.Apply(ctx, fh)
+
+			if err != nil {
+				return err
+			}
+
+			if !ok {
+				return nil
+			}
+
+			_, err = fh.Seek(0, 0)
+
+			if err != nil {
+				return err
+			}
+		}
 
 		ctx = AssignPathContext(ctx, path)
 		return index_cb(ctx, fh)

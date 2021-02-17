@@ -12,14 +12,25 @@ func init() {
 
 type FileListIndexer struct {
 	Indexer
+	filters *Filters
 }
 
 func NewFileListIndexer(ctx context.Context, uri string) (Indexer, error) {
-	i := &FileListIndexer{}
-	return i, nil
+
+	f, err := NewFiltersFromURI(ctx, uri)
+
+	if err != nil {
+		return nil, err
+	}
+
+	idx := &FileListIndexer{
+		filters: f,
+	}
+
+	return idx, nil
 }
 
-func (i *FileListIndexer) IndexURI(ctx context.Context, index_cb IndexerCallbackFunc, uri string) error {
+func (idx *FileListIndexer) IndexURI(ctx context.Context, index_cb IndexerCallbackFunc, uri string) error {
 
 	fh, err := ReaderWithPath(ctx, uri)
 
@@ -46,6 +57,25 @@ func (i *FileListIndexer) IndexURI(ctx context.Context, index_cb IndexerCallback
 
 		if err != nil {
 			return err
+		}
+
+		if idx.filters != nil {
+
+			ok, err := idx.filters.Apply(ctx, fh)
+
+			if err != nil {
+				return err
+			}
+
+			if !ok {
+				return nil
+			}
+
+			_, err = fh.Seek(0, 0)
+
+			if err != nil {
+				return err
+			}
 		}
 
 		ctx = AssignPathContext(ctx, path)
