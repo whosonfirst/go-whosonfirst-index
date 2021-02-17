@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/whosonfirst/go-whosonfirst-log"
 	"io"
 	"net/url"
 	"sort"
@@ -22,130 +21,31 @@ var (
 	drivers   = make(map[string]Driver)
 )
 
-type IndexerFunc func(ctx context.Context, fh io.Reader, args ...interface{}) error
+type ThingyCallbackFunc func(ctx context.Context, fh io.Reader, args ...interface{}) error
 
-type IndexerContextKey string
+type ThingyContextKey string
 
-type Indexer struct {
-	Driver  Driver
-	Func    IndexerFunc
-	Logger  *log.WOFLogger
+type Thingy struct {
+	Indexer  Indexer
+	Func    ThingyCallbackFunc
+	Logger  *log.Logger
 	Indexed int64
 	count   int64
 }
 
-func Register(name string, driver Driver) {
+func NewThingy(ctx context.Context, uri string, cb ThingyCallbackFunc) (*Thingy, error) {
 
-	driversMu.Lock()
-	defer driversMu.Unlock()
-
-	if driver == nil {
-		panic("sql: Register driver is nil")
-
-	}
-
-	if _, dup := drivers[name]; dup {
-		panic("index: Register called twice for driver " + name)
-	}
-
-	drivers[name] = driver
-}
-
-func unregisterAllDrivers() {
-	driversMu.Lock()
-	defer driversMu.Unlock()
-	drivers = make(map[string]Driver)
-}
-
-func Drivers() []string {
-
-	driversMu.RLock()
-	defer driversMu.RUnlock()
-
-	var list []string
-
-	for name := range drivers {
-		list = append(list, name)
-	}
-
-	sort.Strings(list)
-	return list
-}
-
-func Modes() []string {
-
-	return Drivers()
-}
-
-func ContextForPath(path string) (context.Context, error) {
-
-	ctx := AssignPathContext(context.Background(), path)
-	return ctx, nil
-}
-
-func AssignPathContext(ctx context.Context, path string) context.Context {
-
-	key := IndexerContextKey("path")
-	return context.WithValue(ctx, key, path)
-}
-
-func PathForContext(ctx context.Context) (string, error) {
-
-	k := IndexerContextKey("path")
-	path := ctx.Value(k)
-
-	if path == nil {
-		return "", errors.New("path is not set")
-	}
-
-	return path.(string), nil
-}
-
-func NewIndexer(dsn string, f IndexerFunc) (*Indexer, error) {
-
-	driversMu.Lock()
-	defer driversMu.Unlock()
-
-	u, err := url.Parse(dsn)
+	idx, err := NewIndexer(ctx, uri)
 
 	if err != nil {
 		return nil, err
 	}
+	
+	logger := log.Default()
 
-	name := u.Scheme
-
-	// this is here for backwards compatibility
-
-	if name == "" {
-
-		dsn = fmt.Sprintf("%s://", dsn)
-
-		u, err := url.Parse(dsn)
-
-		if err != nil {
-			return nil, err
-		}
-
-		name = u.Scheme
-	}
-
-	driver, ok := drivers[name]
-
-	if !ok {
-		return nil, errors.New("Unknown driver")
-	}
-
-	err = driver.Open(dsn)
-
-	if err != nil {
-		return nil, err
-	}
-
-	logger := log.SimpleWOFLogger("index")
-
-	i := Indexer{
-		Driver:  driver,
-		Func:    f,
+	i := Thingy{
+		Indexer:  idx,
+		Func:    cb,
 		Logger:  logger,
 		Indexed: 0,
 		count:   0,
@@ -154,7 +54,7 @@ func NewIndexer(dsn string, f IndexerFunc) (*Indexer, error) {
 	return &i, nil
 }
 
-func (i *Indexer) Index(ctx context.Context, paths ...string) error {
+func (i *Thingy) Index(ctx context.Context, paths ...string) error {
 
 	t1 := time.Now()
 
@@ -180,7 +80,7 @@ func (i *Indexer) Index(ctx context.Context, paths ...string) error {
 			// pass
 		}
 
-		err := i.Driver.IndexURI(ctx, counter_func, path)
+		err := i.Indexer.IndexURI(ctx, counter_func, path)
 
 		if err != nil {
 			return err
@@ -190,7 +90,7 @@ func (i *Indexer) Index(ctx context.Context, paths ...string) error {
 	return nil
 }
 
-func (i *Indexer) IndexPaths(paths []string, args ...interface{}) error {
+func (i *Thingy) IndexPaths(paths []string, args ...interface{}) error {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -198,7 +98,7 @@ func (i *Indexer) IndexPaths(paths []string, args ...interface{}) error {
 	return i.Index(ctx, paths...)
 }
 
-func (i *Indexer) IndexPath(path string, args ...interface{}) error {
+func (i *Thingy) IndexPath(path string, args ...interface{}) error {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -206,7 +106,7 @@ func (i *Indexer) IndexPath(path string, args ...interface{}) error {
 	return i.Index(ctx, path)
 }
 
-func (i *Indexer) IsIndexing() bool {
+func (i *Thingy) IsIndexing() bool {
 
 	if atomic.LoadInt64(&i.count) > 0 {
 		return true
@@ -215,10 +115,10 @@ func (i *Indexer) IsIndexing() bool {
 	return false
 }
 
-func (i *Indexer) increment() {
+func (i *Thingy) increment() {
 	atomic.AddInt64(&i.count, 1)
 }
 
-func (i *Indexer) decrement() {
+func (i *Thingy) decrement() {
 	atomic.AddInt64(&i.count, -1)
 }

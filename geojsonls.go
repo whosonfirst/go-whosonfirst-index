@@ -1,17 +1,16 @@
-package fs
+package index
 
 import (
 	"bufio"
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/whosonfirst/go-whosonfirst-index"
 	"io"
 )
 
 func init() {
 	dr := NewGeoJSONLDriver()
-	index.Register("geojsonl", dr)
+	Register("geojsonl", dr)
 }
 
 func NewGeoJSONLDriver() index.Driver {

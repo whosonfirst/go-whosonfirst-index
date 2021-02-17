@@ -1,13 +1,12 @@
-package fs
+package index
 
 import (
 	"context"
-	"github.com/whosonfirst/go-whosonfirst-index"
 )
 
 func init() {
 	dr := NewFileDriver()
-	index.Register("file", dr)
+	Register("file", dr)
 }
 
 func NewFileDriver() index.Driver {

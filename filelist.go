@@ -1,14 +1,13 @@
-package fs
+package index
 
 import (
 	"bufio"
 	"context"
-	"github.com/whosonfirst/go-whosonfirst-index"
 )
 
 func init() {
 	dr := NewFileListDriver()
-	index.Register("filelist", dr)
+	Register("filelist", dr)
 }
 
 func NewFileListDriver() index.Driver {

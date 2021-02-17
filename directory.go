@@ -1,31 +1,28 @@
-package fs
+package index
 
 import (
 	"context"
 	"github.com/whosonfirst/go-whosonfirst-crawl"
-	"github.com/whosonfirst/go-whosonfirst-index"
 	"os"
 	"path/filepath"
 )
 
 func init() {
-	dr := NewDirectoryDriver()
-	index.Register("directory", dr)
+	ctx := context.Background()
+	RegisterIndexer(ctx, "directory", NewDirectoryIndexer)
 }
 
-func NewDirectoryDriver() index.Driver {
-	return &DirectoryDriver{}
+type DirectoryIndexer struct {
+	Indexer
 }
 
-type DirectoryDriver struct {
-	index.Driver
+func NewDirectoryIndexer(ctx context.Context, uri string) Indexer {
+
+	i := &DirectoryIndexer{}
+	return i, nil
 }
 
-func (d *DirectoryDriver) Open(uri string) error {
-	return nil
-}
-
-func (d *DirectoryDriver) IndexURI(ctx context.Context, index_cb index.IndexerFunc, uri string) error {
+func (d *DirectoryIndexer) IndexURI(ctx context.Context, index_cb index.IndexerFunc, uri string) error {
 
 	abs_path, err := filepath.Abs(uri)
 

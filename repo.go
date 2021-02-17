@@ -1,14 +1,13 @@
-package fs
+package index
 
 import (
 	"context"
-	"github.com/whosonfirst/go-whosonfirst-index"
 	"path/filepath"
 )
 
 func init() {
 	dr := NewRepoDriver()
-	index.Register("repo", dr)
+	Register("repo", dr)
 }
 
 func NewRepoDriver() index.Driver {

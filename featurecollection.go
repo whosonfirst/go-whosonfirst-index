@@ -1,11 +1,10 @@
-package fs
+package index
 
 import (
 	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/whosonfirst/go-whosonfirst-index"
 	"io/ioutil"
 )
 
