@@ -6,14 +6,16 @@ import (
 	"github.com/aaronland/go-roster"
 	"io"
 	"net/url"
+	"sort"
+	"strings"
 )
 
-type IndexerInitializationFunc func(context.Context, string) (Indexer, error)
+type IndexerInitializeFunc func(context.Context, string) (Indexer, error)
 
 type IndexerCallbackFunc func(context.Context, io.Reader, ...interface{}) error
 
 type Indexer interface {
-	Index(context.Context, IndexerFunc, ...string) error
+	Index(context.Context, IndexerCallbackFunc, string) error
 }
 
 var indexers roster.Roster
@@ -56,7 +58,7 @@ func Schemes() []string {
 		return schemes
 	}
 
-	for _, dr := range indexers.Indexers(ctx) {
+	for _, dr := range indexers.Drivers(ctx) {
 		scheme := fmt.Sprintf("%s://", strings.ToLower(dr))
 		schemes = append(schemes, scheme)
 	}
@@ -75,12 +77,12 @@ func NewIndexer(ctx context.Context, uri string) (Indexer, error) {
 
 	scheme := u.Scheme
 
-	i, err := indexers.Indexer(ctx, scheme)
+	i, err := indexers.Driver(ctx, scheme)
 
 	if err != nil {
 		return nil, err
 	}
 
-	f := i.(IndexerInitializeFunc)
-	return f(ctx, uri)
+	fn := i.(IndexerInitializeFunc)
+	return fn(ctx, uri)
 }

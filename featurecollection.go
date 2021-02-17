@@ -10,19 +10,19 @@ import (
 
 func init() {
 	ctx := context.Background()
-	index.Register(ctx, "featurecollection", NewFeatureCollectionIndexer)
+	RegisterIndexer(ctx, "featurecollection", NewFeatureCollectionIndexer)
 }
 
 type FeatureCollectionIndexer struct {
 	Indexer
 }
 
-func NewFeatureCollectionIndexer() (Indexer, error) {
+func NewFeatureCollectionIndexer(ctx context.Context, uri string) (Indexer, error) {
 	i := &FeatureCollectionIndexer{}
 	return i, nil
 }
 
-func (i *FeatureCollectionIndexer) IndexURI(ctx context.Context, index_cb index.IndexerCallbackFunc, uri string) error {
+func (i *FeatureCollectionIndexer) IndexURI(ctx context.Context, index_cb IndexerCallbackFunc, uri string) error {
 
 	fh, err := ReaderWithPath(ctx, uri)
 

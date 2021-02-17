@@ -20,7 +20,7 @@ func NewFileIndexer(ctx context.Context, uri string) (Indexer, error) {
 
 func (i *FileIndexer) IndexURI(ctx context.Context, index_cb IndexerCallbackFunc, uri string) error {
 
-	fh, err := ReaderWithPath(uri)
+	fh, err := ReaderWithPath(ctx, uri)
 
 	if err != nil {
 		return err

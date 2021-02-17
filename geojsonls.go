@@ -10,14 +10,14 @@ import (
 
 func init() {
 	ctx := context.Background()
-	Register(ctx, "geojsonl", NewGeoJSONLIndexer)
+	RegisterIndexer(ctx, "geojsonl", NewGeoJSONLIndexer)
 }
 
 type GeojsonLIndexer struct {
 	Indexer
 }
 
-func NewGeoJSONLIndexer() (Indexer, error) {
+func NewGeoJSONLIndexer(ctx context.Context, uri string) (Indexer, error) {
 	idx := &GeojsonLIndexer{}
 	return idx, nil
 }

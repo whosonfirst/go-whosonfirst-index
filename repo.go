@@ -7,7 +7,7 @@ import (
 
 func init() {
 	ctx := context.Background()
-	Register(ctx, "repo", NewRepoIndexer)
+	RegisterIndexer(ctx, "repo", NewRepoIndexer)
 }
 
 type RepoIndexer struct {
@@ -22,12 +22,12 @@ func NewRepoIndexer(ctx context.Context, uri string) (Indexer, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	idx := &RepoIndexer{
 		indexer: directory_idx,
 	}
 
-	return dr
+	return idx, nil
 }
 
 func (idx *RepoIndexer) IndexURI(ctx context.Context, index_cb IndexerCallbackFunc, uri string) error {
@@ -40,5 +40,5 @@ func (idx *RepoIndexer) IndexURI(ctx context.Context, index_cb IndexerCallbackFu
 
 	data_path := filepath.Join(abs_path, "data")
 
-	return idx.directory_indexer.IndexURI(ctx, index_cb, data_path)
+	return idx.indexer.Index(ctx, index_cb, data_path)
 }

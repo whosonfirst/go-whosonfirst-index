@@ -3,6 +3,7 @@ package index
 import (
 	"context"
 	"io"
+	"log"
 	"sync/atomic"
 	"time"
 )
@@ -48,7 +49,7 @@ func (i *Thingy) Index(ctx context.Context, uris ...string) error {
 
 	defer func() {
 		t2 := time.Since(t1)
-		i.Logger.Status("time to index paths (%d) %v", len(paths), t2)
+		i.Logger.Printf("time to index paths (%d) %v", len(uris), t2)
 	}()
 
 	i.increment()
@@ -79,7 +80,7 @@ func (i *Thingy) Index(ctx context.Context, uris ...string) error {
 			defer func() {
 				throttle <- true
 				done_ch <- true
- 			}()
+			}()
 
 			select {
 			case <-ctx.Done():
@@ -88,7 +89,7 @@ func (i *Thingy) Index(ctx context.Context, uris ...string) error {
 				// pass
 			}
 
-			err := i.Indexer.IndexURI(ctx, counter_func, uri)
+			err := i.Indexer.Index(ctx, counter_func, uri)
 
 			if err != nil {
 				err_ch <- err
@@ -100,7 +101,7 @@ func (i *Thingy) Index(ctx context.Context, uris ...string) error {
 		select {
 		case <-done_ch:
 			remaining -= 1
-		case err := err_ch:
+		case err := <-err_ch:
 			return err
 		default:
 			// pass

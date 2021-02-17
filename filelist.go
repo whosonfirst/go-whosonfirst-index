@@ -10,14 +10,18 @@ func init() {
 	RegisterIndexer(ctx, "filelist", NewFileListIndexer)
 }
 
+type FileListIndexer struct {
+	Indexer
+}
+
 func NewFileListIndexer(ctx context.Context, uri string) (Indexer, error) {
 	i := &FileListIndexer{}
 	return i, nil
 }
 
-func (i *FileListIndexer) IndexURI(ctx context.Context, index_cb index.IndexerCallbackFunc, uri string) error {
+func (i *FileListIndexer) IndexURI(ctx context.Context, index_cb IndexerCallbackFunc, uri string) error {
 
-	fh, err := ReaderWithPath(uri)
+	fh, err := ReaderWithPath(ctx, uri)
 
 	if err != nil {
 		return err
@@ -38,7 +42,7 @@ func (i *FileListIndexer) IndexURI(ctx context.Context, index_cb index.IndexerCa
 
 		path := scanner.Text()
 
-		fh, err := ReaderWithPath(path)
+		fh, err := ReaderWithPath(ctx, path)
 
 		if err != nil {
 			return err

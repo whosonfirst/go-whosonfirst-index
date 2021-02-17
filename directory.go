@@ -17,7 +17,6 @@ type DirectoryIndexer struct {
 }
 
 func NewDirectoryIndexer(ctx context.Context, uri string) (Indexer, error) {
-
 	i := &DirectoryIndexer{}
 	return i, nil
 }
@@ -43,7 +42,7 @@ func (i *DirectoryIndexer) IndexURI(ctx context.Context, index_cb IndexerCallbac
 			return nil
 		}
 
-		fh, err := ReaderWithPath(path)
+		fh, err := ReaderWithPath(ctx, path)
 
 		if err != nil {
 			return err

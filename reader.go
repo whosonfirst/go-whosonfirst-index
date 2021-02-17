@@ -1,6 +1,7 @@
 package index
 
 import (
+	"context"
 	"github.com/whosonfirst/go-whosonfirst-index"
 	"io"
 	"os"
