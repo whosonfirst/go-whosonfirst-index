@@ -13,7 +13,7 @@ type IndexerInitializationFunc func(context.Context, string) (Indexer, error)
 type IndexerCallbackFunc func(context.Context, io.Reader, ...interface{}) error
 
 type Indexer interface {
-	IndexURI(context.Context, IndexerFunc, string) error
+	Index(context.Context, IndexerFunc, ...string) error
 }
 
 var indexers roster.Roster

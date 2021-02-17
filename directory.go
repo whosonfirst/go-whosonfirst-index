@@ -22,8 +22,8 @@ func NewDirectoryIndexer(ctx context.Context, uri string) Indexer {
 	return i, nil
 }
 
-func (d *DirectoryIndexer) IndexURI(ctx context.Context, index_cb index.IndexerFunc, uri string) error {
-
+func (i *DirectoryIndexer) IndexURI(ctx context.Context, index_cb index.IndexerFunc, uri string) error {
+		
 	abs_path, err := filepath.Abs(uri)
 
 	if err != nil {
