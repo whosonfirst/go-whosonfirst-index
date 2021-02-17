@@ -4,10 +4,13 @@ import (
 	"context"
 	"fmt"
 	"github.com/aaronland/go-roster"
+	"io"
 	"net/url"
 )
 
-func IndexerInitializationFunc func(context.Context, string) (Indexer, error)
+type IndexerInitializationFunc func(context.Context, string) (Indexer, error)
+
+type IndexerCallbackFunc func(context.Context, io.Reader, ...interface{}) error
 
 type Indexer interface {
 	IndexURI(context.Context, IndexerFunc, string) error

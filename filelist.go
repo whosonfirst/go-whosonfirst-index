@@ -6,25 +6,18 @@ import (
 )
 
 func init() {
-	dr := NewFileListDriver()
-	Register("filelist", dr)
+	ctx := context.Background()
+	RegisterIndexer(ctx, "filelist", NewFileListIndexer)
 }
 
-func NewFileListDriver() index.Driver {
-	return &FileListDriver{}
+func NewFileListIndexer(ctx context.Context, uri string) (Indexer, error) {
+	i := &FileListIndexer{}
+	return i, nil
 }
 
-type FileListDriver struct {
-	index.Driver
-}
+func (i *FileListIndexer) IndexURI(ctx context.Context, index_cb index.IndexerCallbackFunc, uri string) error {
 
-func (d *FileListDriver) Open(uri string) error {
-	return nil
-}
-
-func (d *FileListDriver) IndexURI(ctx context.Context, index_cb index.IndexerFunc, uri string) error {
-
-	fh, err := readerFromPath(uri)
+	fh, err := ReaderWithPath(uri)
 
 	if err != nil {
 		return err
@@ -45,13 +38,13 @@ func (d *FileListDriver) IndexURI(ctx context.Context, index_cb index.IndexerFun
 
 		path := scanner.Text()
 
-		fh, err := readerFromPath(path)
+		fh, err := ReaderWithPath(path)
 
 		if err != nil {
 			return err
 		}
 
-		ctx = index.AssignPathContext(ctx, path)
+		ctx = AssignPathContext(ctx, path)
 
 		err = index_cb(ctx, fh)
 

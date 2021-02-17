@@ -2,12 +2,7 @@ package index
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"io"
-	"net/url"
-	"sort"
-	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -16,35 +11,28 @@ const (
 	STDIN = "STDIN"
 )
 
-var (
-	driversMu sync.RWMutex
-	drivers   = make(map[string]Driver)
-)
-
-type ThingyCallbackFunc func(ctx context.Context, fh io.Reader, args ...interface{}) error
-
 type ThingyContextKey string
 
 type Thingy struct {
-	Indexer  Indexer
-	Func    ThingyCallbackFunc
+	Indexer Indexer
+	Func    IndexerCallbackFunc
 	Logger  *log.Logger
 	Indexed int64
 	count   int64
 }
 
-func NewThingy(ctx context.Context, uri string, cb ThingyCallbackFunc) (*Thingy, error) {
+func NewThingy(ctx context.Context, uri string, cb IndexerCallbackFunc) (*Thingy, error) {
 
 	idx, err := NewIndexer(ctx, uri)
 
 	if err != nil {
 		return nil, err
 	}
-	
+
 	logger := log.Default()
 
 	i := Thingy{
-		Indexer:  idx,
+		Indexer: idx,
 		Func:    cb,
 		Logger:  logger,
 		Indexed: 0,
@@ -88,22 +76,6 @@ func (i *Thingy) Index(ctx context.Context, paths ...string) error {
 	}
 
 	return nil
-}
-
-func (i *Thingy) IndexPaths(paths []string, args ...interface{}) error {
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	return i.Index(ctx, paths...)
-}
-
-func (i *Thingy) IndexPath(path string, args ...interface{}) error {
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	return i.Index(ctx, path)
 }
 
 func (i *Thingy) IsIndexing() bool {

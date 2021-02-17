@@ -9,25 +9,22 @@ import (
 )
 
 func init() {
-	dr := NewFeatureCollectionDriver()
-	index.Register("featurecollection", dr)
+	ctx := context.Background()
+	index.Register(ctx, "featurecollection", NewFeatureCollectionIndexer)
 }
 
-func NewFeatureCollectionDriver() index.Driver {
-	return &FeatureCollectionDriver{}
+type FeatureCollectionIndexer struct {
+	Indexer
 }
 
-type FeatureCollectionDriver struct {
-	index.Driver
+func NewFeatureCollectionIndexer() (Indexer, error) {
+	i := &FeatureCollectionIndexer{}
+	return i, nil
 }
 
-func (d *FeatureCollectionDriver) Open(uri string) error {
-	return nil
-}
+func (i *FeatureCollectionIndexer) IndexURI(ctx context.Context, index_cb index.IndexerCallbackFunc, uri string) error {
 
-func (d *FeatureCollectionDriver) IndexURI(ctx context.Context, index_cb index.IndexerFunc, uri string) error {
-
-	fh, err := readerFromPath(uri)
+	fh, err := ReaderWithPath(ctx, uri)
 
 	if err != nil {
 		return err
@@ -72,7 +69,7 @@ func (d *FeatureCollectionDriver) IndexURI(ctx context.Context, index_cb index.I
 		fh := bytes.NewBuffer(feature)
 
 		path := fmt.Sprintf("%s#%d", uri, i)
-		ctx = index.AssignPathContext(ctx, path)
+		ctx = AssignPathContext(ctx, path)
 
 		err = index_cb(ctx, fh)
 

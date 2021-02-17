@@ -5,25 +5,22 @@ import (
 )
 
 func init() {
-	dr := NewFileDriver()
-	Register("file", dr)
+	ctx := context.Background()
+	RegisterIndexer(ctx, "file", NewFileIndexer)
 }
 
-func NewFileDriver() index.Driver {
-	return &FileDriver{}
+type FileIndexer struct {
+	Indexer
 }
 
-type FileDriver struct {
-	index.Driver
+func NewFileIndexer(ctx context.Context, uri string) (Indexer, error) {
+	i := &FileIndexer{}
+	return i, nil
 }
 
-func (d *FileDriver) Open(uri string) error {
-	return nil
-}
+func (i *FileIndexer) IndexURI(ctx context.Context, index_cb IndexerCallbackFunc, uri string) error {
 
-func (d *FileDriver) IndexURI(ctx context.Context, index_cb index.IndexerFunc, uri string) error {
-
-	fh, err := readerFromPath(uri)
+	fh, err := ReaderWithPath(uri)
 
 	if err != nil {
 		return err
@@ -31,7 +28,6 @@ func (d *FileDriver) IndexURI(ctx context.Context, index_cb index.IndexerFunc, u
 
 	defer fh.Close()
 
-	ctx = index.AssignPathContext(ctx, uri)
+	ctx = AssignPathContext(ctx, uri)
 	return index_cb(ctx, fh)
-
 }

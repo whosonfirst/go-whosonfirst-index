@@ -9,25 +9,22 @@ import (
 )
 
 func init() {
-	dr := NewGeoJSONLDriver()
-	Register("geojsonl", dr)
+	ctx := context.Background()
+	Register(ctx, "geojsonl", NewGeoJSONLIndexer)
 }
 
-func NewGeoJSONLDriver() index.Driver {
-	return &GeojsonLDriver{}
+type GeojsonLIndexer struct {
+	Indexer
 }
 
-type GeojsonLDriver struct {
-	index.Driver
+func NewGeoJSONLIndexer() (Indexer, error) {
+	idx := &GeojsonLIndexer{}
+	return idx, nil
 }
 
-func (d *GeojsonLDriver) Open(uri string) error {
-	return nil
-}
+func (idx *GeojsonLIndexer) IndexURI(ctx context.Context, index_cb IndexerCallbackFunc, uri string) error {
 
-func (d *GeojsonLDriver) IndexURI(ctx context.Context, index_cb index.IndexerFunc, uri string) error {
-
-	fh, err := readerFromPath(uri)
+	fh, err := ReaderWithPath(ctx, uri)
 
 	if err != nil {
 		return err
@@ -75,7 +72,7 @@ func (d *GeojsonLDriver) IndexURI(ctx context.Context, index_cb index.IndexerFun
 
 		fh := bytes.NewReader(raw.Bytes())
 
-		ctx = index.AssignPathContext(ctx, path)
+		ctx = AssignPathContext(ctx, path)
 		err = index_cb(ctx, fh)
 
 		if err != nil {

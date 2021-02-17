@@ -1,4 +1,4 @@
-package fs
+package index
 
 import (
 	"github.com/whosonfirst/go-whosonfirst-index"
@@ -7,7 +7,7 @@ import (
 	_ "path/filepath"
 )
 
-func readerFromPath(abs_path string) (io.ReadCloser, error) {
+func ReaderWithPath(ctx context.Context, abs_path string) (io.ReadCloser, error) {
 
 	if abs_path == index.STDIN {
 		return os.Stdin, nil
