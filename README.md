@@ -4,7 +4,15 @@ Go package for indexing Who's On First documents
 
 ## Important
 
-This is a "version 2" release and is backwards incompatible with previous versions of this package. If you need to use the older version specify it as follows in your `go.mod` file:
+This package is no longer maintained.
+
+### Version "2"
+
+Version "2" of this package was short-lived and quickly replaced by [whosonfirst/go-whosonfirst-iterate](https://github.com/whosonfirst/go-whosonfirst-iterate). You should use that instead.
+
+### Version "1"
+
+If you need to use the original "v1" package you specify it as follows in your `go.mod` file:
 
 ```
 require (
