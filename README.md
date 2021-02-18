@@ -8,7 +8,7 @@ This is a "version 2" release and is backwards incompatible with previous versio
 
 ```
 require (
-	github.com/aaronland/go-whosonfirst-index v0.3.4
+	github.com/whosonfirst/go-whosonfirst-index v0.3.4
 )
 ```
 
